@@ -8,14 +8,12 @@ import { normalizeExamQuestionStem } from '../utils/examQuestionDisplay';
 import { gradeKeyFromValue } from '../utils/grade';
 import ExamQuestionCard from '../components/exam/ExamQuestionCard';
 
-const buildEntranceExamsLink = ({ isStudent, subject, chapter, topic }) => {
+const buildEntranceExamsLink = ({ isStudent, subject }) => {
   const base = isStudent ? '/curriculum/exams' : '/teacher/exams';
   const params = new URLSearchParams();
   const gradeKey = gradeKeyFromValue(subject?.gradeLevel);
   if (gradeKey) params.set('gradeLevel', gradeKey);
   if (subject?._id) params.set('subjectId', subject._id);
-  if (chapter?._id) params.set('chapterId', chapter._id);
-  if (topic?._id) params.set('topicId', topic._id);
   const query = params.toString();
   return query ? `${base}?${query}` : base;
 };
@@ -344,7 +342,7 @@ const TopicExam = () => {
           </h4>
           <div className="flex flex-col sm:items-end gap-2">
             <Link
-              to={buildEntranceExamsLink({ isStudent, subject, chapter, topic })}
+              to={buildEntranceExamsLink({ isStudent, subject })}
               className="text-xs font-bold text-primary-container hover:underline"
             >
               View in Entrance Exams

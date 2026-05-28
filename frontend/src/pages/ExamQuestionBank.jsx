@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Award, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ExamQuestionCard from '../components/exam/ExamQuestionCard';
@@ -10,6 +10,7 @@ import {
   validateExamAnswer,
   getExamPapersBySubject,
   DEFAULT_EXAM_YEARS,
+  EXAM_QUESTIONS_PAGE_SIZE,
 } from '../services/exam';
 import { addBookmark, getBookmarks, removeBookmark } from '../services/engagement';
 import { formatTopicTitleDisplay } from '../utils/formatTopicDisplayText';
@@ -46,6 +47,13 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
   const [checkingExamQuestionId, setCheckingExamQuestionId] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  const filteredSubjects = useMemo(
+    () => (gradeLevel
+      ? subjects.filter((s) => gradeMatchesFilter(s.gradeLevel, gradeLevel))
+      : subjects),
+    [subjects, gradeLevel],
+  );
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
@@ -70,11 +78,10 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
 
   useEffect(() => {
     const urlTopicId = searchParams.get('topicId');
-    const urlChapterId = searchParams.get('chapterId');
     const urlSubjectId = searchParams.get('subjectId');
-    if (!urlTopicId || urlChapterId) return;
+    if (!urlTopicId || urlSubjectId) return;
 
-    const hydrateFromTopic = async () => {
+    const hydrateSubjectFromTopic = async () => {
       try {
         const res = await api.get(`/content/topics/${urlTopicId}`);
         const topicData = res.data?.data || res.data;
@@ -82,24 +89,26 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
 
         const chapterRes = await api.get(`/content/chapters/${topicData.chapter}`);
         const chapterData = chapterRes.data?.data || chapterRes.data;
-        if (!chapterData) return;
+        if (!chapterData?.subject) return;
 
-        if (!urlSubjectId && chapterData.subject) {
-          setSubjectId(String(chapterData.subject));
-          const subjectRes = await api.get(`/subjects/${chapterData.subject}`);
-          const subjectData = subjectRes.data?.data || subjectRes.data;
-          const gradeKey = gradeKeyFromValue(subjectData?.gradeLevel);
-          if (gradeKey) setGradeLevel(gradeKey);
-        }
-        setChapterId(String(chapterData._id));
-        setTopicId(String(urlTopicId));
+        setSubjectId(String(chapterData.subject));
+        const subjectRes = await api.get(`/subjects/${chapterData.subject}`);
+        const subjectData = subjectRes.data?.data || subjectRes.data;
+        const gradeKey = gradeKeyFromValue(subjectData?.gradeLevel);
+        if (gradeKey) setGradeLevel(gradeKey);
       } catch (_err) {
         /* non-blocking */
       }
     };
 
-    hydrateFromTopic();
+    hydrateSubjectFromTopic();
   }, [searchParams]);
+
+  useEffect(() => {
+    if (subjectId || filteredSubjects.length === 0) return;
+    if (!gradeLevel && !selectedGrade) return;
+    setSubjectId(String(filteredSubjects[0]._id));
+  }, [filteredSubjects, subjectId, gradeLevel, selectedGrade]);
 
   useEffect(() => {
     if (!subjectId) {
@@ -155,10 +164,10 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     }
   }, [isStudent]);
 
-  const hasActiveFilter = Boolean(subjectId || chapterId || topicId || year || debouncedQuery);
+  const canFetchQuestions = Boolean(subjectId);
 
   useEffect(() => {
-    if (!hasActiveFilter) {
+    if (!canFetchQuestions) {
       setQuestions([]);
       setTotal(0);
       setPages(1);
@@ -171,13 +180,13 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
       setError('');
       try {
         const res = await searchExamQuestions({
-          subjectId: subjectId || undefined,
+          subjectId,
           chapterId: chapterId || undefined,
           topicId: topicId || undefined,
           year: year || undefined,
           q: debouncedQuery || undefined,
           page,
-          limit: 20,
+          limit: EXAM_QUESTIONS_PAGE_SIZE,
         });
         setQuestions(res?.data || []);
         setTotal(res?.total ?? 0);
@@ -193,16 +202,12 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     };
 
     fetchQuestions();
-  }, [subjectId, chapterId, topicId, year, debouncedQuery, page, hasActiveFilter]);
+  }, [subjectId, chapterId, topicId, year, debouncedQuery, page, canFetchQuestions]);
 
-  const filteredSubjects = gradeLevel
-    ? subjects.filter((s) => gradeMatchesFilter(s.gradeLevel, gradeLevel))
-    : subjects;
-
-  const selectedSubject = filteredSubjects.find((s) => s._id === subjectId)
-    || subjects.find((s) => s._id === subjectId);
-  const selectedChapter = chapters.find((c) => c._id === chapterId);
-  const selectedTopic = topics.find((t) => t._id === topicId);
+  const selectedSubject = filteredSubjects.find((s) => String(s._id) === String(subjectId))
+    || subjects.find((s) => String(s._id) === String(subjectId));
+  const selectedChapter = chapters.find((c) => String(c._id) === String(chapterId));
+  const selectedTopic = topics.find((t) => String(t._id) === String(topicId));
 
   const getTopicName = (q) => {
     if (selectedTopic && String(q.topic) === String(selectedTopic._id)) {
@@ -212,6 +217,14 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     if (fromList) return formatTopicTitleDisplay(fromList.topicName);
     if (q.topicDoc?.topicName) return formatTopicTitleDisplay(q.topicDoc.topicName);
     return null;
+  };
+
+  const getChapterName = (q) => {
+    if (selectedChapter?.chapterName) return selectedChapter.chapterName;
+    const chapterFromTopic = q.topicDoc?.chapter;
+    if (!chapterFromTopic) return null;
+    const match = chapters.find((c) => String(c._id) === String(chapterFromTopic));
+    return match?.chapterName || null;
   };
 
   const getExamQuestionBookmark = (questionId) => bookmarks.find((bookmark) => (
@@ -269,6 +282,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     setSubjectId('');
     setChapterId('');
     setTopicId('');
+    setYear('');
     setPage(1);
   };
 
@@ -276,6 +290,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     setSubjectId(value);
     setChapterId('');
     setTopicId('');
+    setYear('');
     setPage(1);
   };
 
@@ -312,11 +327,15 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     const chips = [];
     if (gradeLevel) chips.push(`Grade ${gradeLevel}`);
     if (selectedSubject?.subjectName) chips.push(selectedSubject.subjectName);
-    if (selectedChapter?.chapterName) chips.push(selectedChapter.chapterName);
+    const chapterName = getChapterName(q);
+    if (chapterName) chips.push(chapterName);
     const topicName = getTopicName(q);
     if (topicName) chips.push(topicName);
+    if (q.examPaperDoc?.year != null) chips.push(`${q.examPaperDoc.year} E.C.`);
     return chips;
   };
+
+  const hasRefinementFilters = Boolean(chapterId || topicId || year || debouncedQuery);
 
   return (
     <div className="py-4 sm:py-6 space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 w-full min-w-0">
@@ -360,7 +379,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
               onChange={(e) => handleSubjectChange(e.target.value)}
               className="w-full bg-white border border-outline/20 px-4 py-3 rounded-xl font-semibold text-sm text-on-surface focus:border-primary-container outline-none"
             >
-              <option value="">All subjects</option>
+              <option value="">Select subject</option>
               {filteredSubjects.map((s) => (
                 <option key={s._id} value={s._id}>{s.subjectName}</option>
               ))}
@@ -405,7 +424,8 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
               id="exam-bank-year"
               value={year}
               onChange={(e) => handleYearChange(e.target.value)}
-              className="w-full bg-white border border-outline/20 px-4 py-3 rounded-xl font-semibold text-sm text-on-surface focus:border-primary-container outline-none"
+              disabled={!subjectId}
+              className="w-full bg-white border border-outline/20 px-4 py-3 rounded-xl font-semibold text-sm text-on-surface focus:border-primary-container outline-none disabled:opacity-50"
             >
               <option value="">All years</option>
               {yearOptions.map((y) => (
@@ -425,11 +445,12 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
                 value={textQuery}
                 onChange={(e) => { setTextQuery(e.target.value); setPage(1); }}
                 placeholder="Search by question stem..."
-                className="w-full bg-white border border-outline/20 pl-9 pr-3 py-3 rounded-xl font-semibold text-sm text-on-surface focus:border-primary-container outline-none"
+                disabled={!subjectId}
+                className="w-full bg-white border border-outline/20 pl-9 pr-3 py-3 rounded-xl font-semibold text-sm text-on-surface focus:border-primary-container outline-none disabled:opacity-50"
               />
             </div>
           </div>
-          {hasActiveFilter && (
+          {(canFetchQuestions || hasRefinementFilters || gradeLevel) && (
             <button
               type="button"
               onClick={clearFilters}
@@ -444,9 +465,9 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
         <h2 className="text-sm font-bold text-on-surface-variant">
-          {hasActiveFilter
-            ? `${total} ${total === 1 ? 'question' : 'questions'} found`
-            : 'Select grade, subject, chapter, topic, year, or search to browse'}
+          {!canFetchQuestions
+            ? 'Select a subject to load exam questions'
+            : `${total} ${total === 1 ? 'question' : 'questions'}${hasRefinementFilters ? ' matching filters' : ' for this subject'}`}
         </h2>
         {isStudent && questions.length > 0 && (
           <p className="text-xs text-on-surface-variant font-semibold">
@@ -465,10 +486,10 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
         <div className="flex justify-center py-20 bg-white rounded-xl border border-outline/5">
           <div className="w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : !hasActiveFilter ? (
+      ) : !canFetchQuestions ? (
         <div className="bg-surface/50 border border-dashed border-outline/20 rounded-xl py-24 text-center">
           <Award size={56} className="mx-auto mb-4 text-outline opacity-40" />
-          <p className="text-base font-bold text-on-surface-variant">Choose a grade, subject, chapter, topic, year, or search term to get started.</p>
+          <p className="text-base font-bold text-on-surface-variant">Choose a grade and subject to view all entrance exam questions.</p>
         </div>
       ) : questions.length > 0 ? (
         <div className="grid grid-cols-1 gap-6">
@@ -476,7 +497,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
             <ExamQuestionCard
               key={q._id}
               question={q}
-              index={(page - 1) * 20 + i}
+              index={(page - 1) * EXAM_QUESTIONS_PAGE_SIZE + i}
               isStudent={isStudent}
               feedback={examFeedback[q._id]}
               selectedAnswer={examSelectedAnswers[q._id]}
@@ -496,7 +517,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
         </div>
       )}
 
-      {hasActiveFilter && pages > 1 && (
+      {canFetchQuestions && pages > 1 && (
         <div className="flex items-center justify-center gap-4 pt-2">
           <button
             type="button"
@@ -508,7 +529,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
             Previous
           </button>
           <span className="text-sm font-semibold text-on-surface-variant tabular-nums">
-            Page {page} of {pages}
+            Page {page} of {pages} · {EXAM_QUESTIONS_PAGE_SIZE} per page
           </span>
           <button
             type="button"

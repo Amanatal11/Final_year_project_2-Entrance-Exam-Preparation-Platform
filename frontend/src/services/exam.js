@@ -39,3 +39,4 @@ export const getExamPapersBySubject = async (subjectId, { page = 1, limit = 100 
 };
 
 export const DEFAULT_EXAM_YEARS = ['2014', '2015', '2016', '2017', '2018'];
+export const EXAM_QUESTIONS_PAGE_SIZE = 5;
