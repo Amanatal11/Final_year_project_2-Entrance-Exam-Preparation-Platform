@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Award, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ExamQuestionCard from '../components/exam/ExamQuestionCard';
+import { AuthContext } from '../context/AuthContext';
 import { getSubjects } from '../services/subject';
 import { getChaptersBySubject, getTopicsByChapter } from '../services/chapter';
 import api from '../services/api';
@@ -17,6 +18,7 @@ import { formatTopicTitleDisplay } from '../utils/formatTopicDisplayText';
 import { GRADE_OPTIONS, gradeMatchesFilter, gradeKeyFromValue } from '../utils/grade';
 
 const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
+  const { user } = useContext(AuthContext);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [subjects, setSubjects] = useState([]);
@@ -47,12 +49,15 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
   const [checkingExamQuestionId, setCheckingExamQuestionId] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  const filteredSubjects = useMemo(
-    () => (gradeLevel
+  const filteredSubjects = useMemo(() => {
+    let list = gradeLevel
       ? subjects.filter((s) => gradeMatchesFilter(s.gradeLevel, gradeLevel))
-      : subjects),
-    [subjects, gradeLevel],
-  );
+      : subjects;
+    if (isStudent && user?.stream) {
+      list = list.filter((s) => !s.stream || s.stream === user.stream);
+    }
+    return list;
+  }, [subjects, gradeLevel, isStudent, user?.stream]);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -72,7 +77,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
 
   useEffect(() => {
     getSubjects()
-      .then((res) => setSubjects(res?.data || []))
+      .then((list) => setSubjects(Array.isArray(list) ? list : []))
       .catch(() => setSubjects([]));
   }, []);
 
@@ -109,6 +114,16 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     if (!gradeLevel && !selectedGrade) return;
     setSubjectId(String(filteredSubjects[0]._id));
   }, [filteredSubjects, subjectId, gradeLevel, selectedGrade]);
+
+  useEffect(() => {
+    if (!subjectId || filteredSubjects.length === 0) return;
+    const stillValid = filteredSubjects.some((s) => String(s._id) === String(subjectId));
+    if (!stillValid) {
+      setSubjectId('');
+      setChapterId('');
+      setTopicId('');
+    }
+  }, [filteredSubjects, subjectId]);
 
   useEffect(() => {
     if (!subjectId) {
@@ -381,7 +396,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
             >
               <option value="">Select subject</option>
               {filteredSubjects.map((s) => (
-                <option key={s._id} value={s._id}>{s.subjectName}</option>
+                <option key={String(s._id)} value={String(s._id)}>{s.subjectName}</option>
               ))}
             </select>
           </div>

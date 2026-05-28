@@ -7,7 +7,8 @@ export const updateSubject = async (id, data) => {
 
 export const getSubjects = async () => {
   const response = await api.get('/subjects');
-  return response.data;
+  const payload = response.data;
+  return Array.isArray(payload) ? payload : (payload?.data || []);
 };
 
 export const deleteSubject = async (id) => {
