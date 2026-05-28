@@ -49,7 +49,7 @@ const TeacherLayout = () => {
     }
   };
 
-  const headerTitle = isQaNav ? 'Q&A Management' : isExamsNav ? 'Previous Year Exams' : 'Course Management';
+  const headerTitle = isQaNav ? 'Q&A Management' : isExamsNav ? 'Entrance Exams' : 'Course Management';
 
   const navItemClass = (active) =>
     `flex items-center gap-3 w-full px-3 py-2.5 transition-all font-semibold rounded-lg ${
@@ -114,7 +114,7 @@ const TeacherLayout = () => {
               className={navItemClass(isExamsNav)}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <Award size={20} /> Previous Year Exams (FR-07)
+              <Award size={20} /> Entrance Exams
             </Link>
           </div>
         </nav>
@@ -173,7 +173,7 @@ const TeacherLayout = () => {
                 className={`${navItemClass(isExamsNav)}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <Award size={20} /> Previous Year Exams (FR-07)
+                <Award size={20} /> Entrance Exams
               </Link>
             </nav>
             <div className="p-3 border-t border-outline/5 shrink-0 bg-background">

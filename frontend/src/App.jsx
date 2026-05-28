@@ -741,7 +741,7 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
               }`}
             >
               <Award size={16} className="text-primary-container shrink-0" />
-              Previous Year Exams (FR-07)
+              Entrance Exams
             </button>
           )}
 
@@ -848,7 +848,7 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
                   className="flex items-center gap-3 w-full px-4 py-3 font-semibold rounded-xl bg-white border border-outline/10"
                 >
                   <Award size={18} className="text-primary-container" />
-                  Previous Year Exams (FR-07)
+                  Entrance Exams
                 </button>
               )}
               {userRole === 'student' && renderMobileCurriculumNav()}
@@ -1566,7 +1566,7 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={['student', 'admin']}>
                 <StudentLayout selectedGrade={selectedGrade} setSelectedGrade={setSelectedGrade}>
-                  <ExamQuestionBank isStudent />
+                  <ExamQuestionBank isStudent selectedGrade={selectedGrade} />
                 </StudentLayout>
               </ProtectedRoute>
             }

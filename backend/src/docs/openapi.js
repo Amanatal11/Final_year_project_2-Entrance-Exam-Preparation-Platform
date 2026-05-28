@@ -1270,7 +1270,7 @@ function getOpenApiSpec() {
       '/api/exams/questions/search': {
         get: {
           tags: ['Exams'],
-          summary: 'Search exam questions (FR-07)',
+          summary: 'Search exam questions',
           description: 'Requires at least one of subjectId, chapterId, topicId, year, or q. Students receive results without correctAnswer.',
           parameters: [
             { name: 'subjectId', in: 'query', schema: { type: 'string' } },

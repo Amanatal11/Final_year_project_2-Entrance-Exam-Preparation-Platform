@@ -13,8 +13,9 @@ import {
 } from '../services/exam';
 import { addBookmark, getBookmarks, removeBookmark } from '../services/engagement';
 import { formatTopicTitleDisplay } from '../utils/formatTopicDisplayText';
+import { GRADE_OPTIONS, gradeMatchesFilter, gradeKeyFromValue } from '../utils/grade';
 
-const ExamQuestionBank = ({ isStudent = false }) => {
+const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [subjects, setSubjects] = useState([]);
@@ -22,6 +23,9 @@ const ExamQuestionBank = ({ isStudent = false }) => {
   const [topics, setTopics] = useState([]);
   const [yearOptions, setYearOptions] = useState(DEFAULT_EXAM_YEARS);
 
+  const [gradeLevel, setGradeLevel] = useState(
+    searchParams.get('gradeLevel') || gradeKeyFromValue(selectedGrade) || '',
+  );
   const [subjectId, setSubjectId] = useState(searchParams.get('subjectId') || '');
   const [chapterId, setChapterId] = useState(searchParams.get('chapterId') || '');
   const [topicId, setTopicId] = useState(searchParams.get('topicId') || '');
@@ -53,6 +57,12 @@ const ExamQuestionBank = ({ isStudent = false }) => {
   }, [textQuery]);
 
   useEffect(() => {
+    if (!selectedGrade || searchParams.get('gradeLevel')) return;
+    const key = gradeKeyFromValue(selectedGrade);
+    if (key) setGradeLevel(key);
+  }, [selectedGrade, searchParams]);
+
+  useEffect(() => {
     getSubjects()
       .then((res) => setSubjects(res?.data || []))
       .catch(() => setSubjects([]));
@@ -76,6 +86,10 @@ const ExamQuestionBank = ({ isStudent = false }) => {
 
         if (!urlSubjectId && chapterData.subject) {
           setSubjectId(String(chapterData.subject));
+          const subjectRes = await api.get(`/subjects/${chapterData.subject}`);
+          const subjectData = subjectRes.data?.data || subjectRes.data;
+          const gradeKey = gradeKeyFromValue(subjectData?.gradeLevel);
+          if (gradeKey) setGradeLevel(gradeKey);
         }
         setChapterId(String(chapterData._id));
         setTopicId(String(urlTopicId));
@@ -123,6 +137,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
 
   useEffect(() => {
     const params = {};
+    if (gradeLevel) params.gradeLevel = gradeLevel;
     if (subjectId) params.subjectId = subjectId;
     if (chapterId) params.chapterId = chapterId;
     if (topicId) params.topicId = topicId;
@@ -130,7 +145,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
     if (debouncedQuery) params.q = debouncedQuery;
     if (page > 1) params.page = String(page);
     setSearchParams(params, { replace: true });
-  }, [subjectId, chapterId, topicId, year, debouncedQuery, page, setSearchParams]);
+  }, [gradeLevel, subjectId, chapterId, topicId, year, debouncedQuery, page, setSearchParams]);
 
   useEffect(() => {
     if (isStudent) {
@@ -180,7 +195,12 @@ const ExamQuestionBank = ({ isStudent = false }) => {
     fetchQuestions();
   }, [subjectId, chapterId, topicId, year, debouncedQuery, page, hasActiveFilter]);
 
-  const selectedSubject = subjects.find((s) => s._id === subjectId);
+  const filteredSubjects = gradeLevel
+    ? subjects.filter((s) => gradeMatchesFilter(s.gradeLevel, gradeLevel))
+    : subjects;
+
+  const selectedSubject = filteredSubjects.find((s) => s._id === subjectId)
+    || subjects.find((s) => s._id === subjectId);
   const selectedChapter = chapters.find((c) => c._id === chapterId);
   const selectedTopic = topics.find((t) => t._id === topicId);
 
@@ -244,6 +264,14 @@ const ExamQuestionBank = ({ isStudent = false }) => {
     }
   };
 
+  const handleGradeChange = (value) => {
+    setGradeLevel(value);
+    setSubjectId('');
+    setChapterId('');
+    setTopicId('');
+    setPage(1);
+  };
+
   const handleSubjectChange = (value) => {
     setSubjectId(value);
     setChapterId('');
@@ -268,6 +296,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
   };
 
   const clearFilters = () => {
+    setGradeLevel(gradeKeyFromValue(selectedGrade) || '');
     setSubjectId('');
     setChapterId('');
     setTopicId('');
@@ -281,6 +310,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
 
   const buildContextChips = (q) => {
     const chips = [];
+    if (gradeLevel) chips.push(`Grade ${gradeLevel}`);
     if (selectedSubject?.subjectName) chips.push(selectedSubject.subjectName);
     if (selectedChapter?.chapterName) chips.push(selectedChapter.chapterName);
     const topicName = getTopicName(q);
@@ -298,8 +328,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
 
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-on-surface">Previous Year Exams</h1>
-          <p className="text-sm text-on-surface-variant mt-1">FR-07 — Search and filter national entrance exam questions by subject, chapter, topic, and year.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-on-surface">Entrance Exams</h1>
         </div>
         <div className="w-12 h-12 bg-primary-container/5 rounded-xl flex items-center justify-center text-primary-container border border-primary-container/10 shrink-0">
           <Award size={28} />
@@ -307,7 +336,22 @@ const ExamQuestionBank = ({ isStudent = false }) => {
       </div>
 
       <div className="bg-white rounded-xl border border-outline-variant p-4 sm:p-6 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="exam-bank-grade" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Grade level</label>
+            <select
+              id="exam-bank-grade"
+              value={gradeLevel}
+              onChange={(e) => handleGradeChange(e.target.value)}
+              className="w-full bg-white border border-outline/20 px-4 py-3 rounded-xl font-semibold text-sm text-on-surface focus:border-primary-container outline-none"
+            >
+              <option value="">All grades</option>
+              {GRADE_OPTIONS.map((g) => (
+                <option key={g.key} value={g.key}>{g.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="exam-bank-subject" className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Subject</label>
             <select
@@ -317,7 +361,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
               className="w-full bg-white border border-outline/20 px-4 py-3 rounded-xl font-semibold text-sm text-on-surface focus:border-primary-container outline-none"
             >
               <option value="">All subjects</option>
-              {subjects.map((s) => (
+              {filteredSubjects.map((s) => (
                 <option key={s._id} value={s._id}>{s.subjectName}</option>
               ))}
             </select>
@@ -402,7 +446,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
         <h2 className="text-sm font-bold text-on-surface-variant">
           {hasActiveFilter
             ? `${total} ${total === 1 ? 'question' : 'questions'} found`
-            : 'Select at least one filter to browse exam questions'}
+            : 'Select grade, subject, chapter, topic, year, or search to browse'}
         </h2>
         {isStudent && questions.length > 0 && (
           <p className="text-xs text-on-surface-variant font-semibold">
@@ -424,7 +468,7 @@ const ExamQuestionBank = ({ isStudent = false }) => {
       ) : !hasActiveFilter ? (
         <div className="bg-surface/50 border border-dashed border-outline/20 rounded-xl py-24 text-center">
           <Award size={56} className="mx-auto mb-4 text-outline opacity-40" />
-          <p className="text-base font-bold text-on-surface-variant">Choose a subject, chapter, topic, year, or search term to get started.</p>
+          <p className="text-base font-bold text-on-surface-variant">Choose a grade, subject, chapter, topic, year, or search term to get started.</p>
         </div>
       ) : questions.length > 0 ? (
         <div className="grid grid-cols-1 gap-6">

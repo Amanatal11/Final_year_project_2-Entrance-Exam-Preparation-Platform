@@ -5,7 +5,20 @@ import api from '../services/api';
 import { searchExamQuestions, validateExamAnswer } from '../services/exam';
 import { addBookmark, getBookmarks, removeBookmark } from '../services/engagement';
 import { normalizeExamQuestionStem } from '../utils/examQuestionDisplay';
+import { gradeKeyFromValue } from '../utils/grade';
 import ExamQuestionCard from '../components/exam/ExamQuestionCard';
+
+const buildEntranceExamsLink = ({ isStudent, subject, chapter, topic }) => {
+  const base = isStudent ? '/curriculum/exams' : '/teacher/exams';
+  const params = new URLSearchParams();
+  const gradeKey = gradeKeyFromValue(subject?.gradeLevel);
+  if (gradeKey) params.set('gradeLevel', gradeKey);
+  if (subject?._id) params.set('subjectId', subject._id);
+  if (chapter?._id) params.set('chapterId', chapter._id);
+  if (topic?._id) params.set('topicId', topic._id);
+  const query = params.toString();
+  return query ? `${base}?${query}` : base;
+};
 
 const TopicExam = () => {
   const { topic, chapter, subject, isStudent } = useOutletContext();
@@ -330,14 +343,12 @@ const TopicExam = () => {
             Exam questions · {examQuestions.length} {examQuestions.length === 1 ? 'item' : 'items'}
           </h4>
           <div className="flex flex-col sm:items-end gap-2">
-            {isStudent && (
-              <Link
-                to={`/curriculum/exams?topicId=${topic._id}${subject?._id ? `&subjectId=${subject._id}` : ''}${chapter?._id ? `&chapterId=${chapter._id}` : ''}`}
-                className="text-xs font-bold text-primary-container hover:underline"
-              >
-                Browse all previous-year exams (FR-07)
-              </Link>
-            )}
+            <Link
+              to={buildEntranceExamsLink({ isStudent, subject, chapter, topic })}
+              className="text-xs font-bold text-primary-container hover:underline"
+            >
+              View in Entrance Exams
+            </Link>
             {isStudent && examQuestions.length > 0 && (
               <p className="text-xs text-on-surface-variant font-semibold">
                 Select an option, then press{' '}
