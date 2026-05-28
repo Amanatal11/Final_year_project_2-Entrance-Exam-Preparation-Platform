@@ -15,7 +15,7 @@ const {
   deleteExamQuestion,
   validateExamAnswer,
 } = require('../controllers/examQuestionController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalAuthenticate } = require('../middleware/auth');
 
 // Exam Paper routes
 router.get('/papers/subjects/:subjectId', getExamPapersBySubject);
@@ -26,7 +26,7 @@ router.delete('/papers/:paperId', protect, authorize('teacher', 'admin'), delete
 
 // Exam Question routes
 router.get('/papers/:paperId/questions', getExamQuestionsByPaper);
-router.get('/questions/search', searchExamQuestions);
+router.get('/questions/search', optionalAuthenticate, searchExamQuestions);
 router.post('/papers/:paperId/questions', protect, authorize('teacher', 'admin'), addExamQuestion);
 router.put('/questions/:questionId', protect, authorize('teacher', 'admin'), updateExamQuestion);
 router.delete('/questions/:questionId', protect, authorize('teacher', 'admin'), deleteExamQuestion);

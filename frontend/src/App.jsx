@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
-import { CircleUserRound, GraduationCap, LogOut, ShieldCheck, BookOpen, ArrowRight, Menu, X, Bell, Bookmark, Search, TriangleAlert, Bot, Send, Flame, CheckSquare } from 'lucide-react';
+import { CircleUserRound, GraduationCap, LogOut, ShieldCheck, BookOpen, ArrowRight, Menu, X, Bell, Bookmark, Search, TriangleAlert, Bot, Send, Flame, CheckSquare, Award } from 'lucide-react';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import api from './services/api';
 import Login from './pages/Login';
@@ -20,6 +20,7 @@ import TopicVideo from './pages/TopicVideo';
 import TopicExercise from './pages/TopicExercise';
 import TopicQuiz from './pages/TopicQuiz';
 import TopicExam from './pages/TopicExam';
+import ExamQuestionBank from './pages/ExamQuestionBank';
 import TopicReports from './pages/TopicReports';
 import TopicQA from './pages/TopicQA';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -729,6 +730,21 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
             </div>
           </div>
 
+          {(userRole === 'student' || userRole === 'admin') && (
+            <button
+              type="button"
+              onClick={() => navigate('/curriculum/exams')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-sm font-bold ${
+                location.pathname === '/curriculum/exams'
+                  ? 'bg-primary-container/10 text-primary-container border-primary-container/20'
+                  : 'bg-white text-on-surface-variant border-outline/10 hover:bg-primary-container/5'
+              }`}
+            >
+              <Award size={16} className="text-primary-container shrink-0" />
+              Previous Year Exams (FR-07)
+            </button>
+          )}
+
           {userRole === 'student' && renderCurriculumNav()}
 
           {ACTION_ITEMS.length > 0 && (
@@ -822,6 +838,19 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
                   ))}
                 </div>
               </div>
+              {(userRole === 'student' || userRole === 'admin') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/curriculum/exams');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-3 font-semibold rounded-xl bg-white border border-outline/10"
+                >
+                  <Award size={18} className="text-primary-container" />
+                  Previous Year Exams (FR-07)
+                </button>
+              )}
               {userRole === 'student' && renderMobileCurriculumNav()}
               {ACTION_ITEMS.map((item) => (
                 <button key={item.key} onClick={() => { navigate(item.path); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 w-full px-4 py-3 font-semibold rounded-xl bg-white border border-outline/10">{item.icon} {item.label}</button>
@@ -1489,6 +1518,7 @@ const App = () => {
               <Route path="exam" element={<TopicExam />} />
               <Route path="qa" element={<TopicQA />} />
             </Route>
+            <Route path="exams" element={<ExamQuestionBank isStudent={false} />} />
           </Route>
           {/* Curriculum Routes */}
           <Route 
@@ -1531,6 +1561,16 @@ const App = () => {
             <Route path="qa" element={<TopicQA />} />
             <Route path="reports" element={<TopicReports />} />
           </Route>
+          <Route
+            path="/curriculum/exams"
+            element={
+              <ProtectedRoute allowedRoles={['student', 'admin']}>
+                <StudentLayout selectedGrade={selectedGrade} setSelectedGrade={setSelectedGrade}>
+                  <ExamQuestionBank isStudent />
+                </StudentLayout>
+              </ProtectedRoute>
+            }
+          />
 
         </Routes>
       </BrowserRouter>

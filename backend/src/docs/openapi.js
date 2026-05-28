@@ -1270,15 +1270,21 @@ function getOpenApiSpec() {
       '/api/exams/questions/search': {
         get: {
           tags: ['Exams'],
-          summary: 'Search exam questions',
+          summary: 'Search exam questions (FR-07)',
+          description: 'Requires at least one of subjectId, chapterId, topicId, year, or q. Students receive results without correctAnswer.',
           parameters: [
             { name: 'subjectId', in: 'query', schema: { type: 'string' } },
             { name: 'chapterId', in: 'query', schema: { type: 'string' } },
             { name: 'topicId', in: 'query', schema: { type: 'string' } },
-            { name: 'year', in: 'query', schema: { type: 'string' } },
-            { name: 'q', in: 'query', schema: { type: 'string' } },
+            { name: 'year', in: 'query', schema: { type: 'integer' }, description: 'Exam year (E.C.)' },
+            { name: 'q', in: 'query', schema: { type: 'string' }, description: 'Case-insensitive question text search' },
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 200 } },
           ],
-          responses: { '200': { description: 'Results' } },
+          responses: {
+            '200': { description: 'Paginated exam questions' },
+            '400': { description: 'Missing filters or invalid parameters' },
+          },
         },
       },
       '/api/exams/questions/{questionId}': {

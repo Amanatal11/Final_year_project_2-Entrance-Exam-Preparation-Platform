@@ -63,6 +63,42 @@ const authenticate = async (req, res, next) => {
 };
 
 /**
+ * Optional JWT authentication — attaches req.user when a valid token is present,
+ * but allows unauthenticated requests to continue.
+ */
+const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.substring(7);
+    const redis = getRedisClient();
+    if (redis) {
+      const isBlacklisted = await redis.get(`token_blacklist:${token}`);
+      if (isBlacklisted) {
+        return next();
+      }
+    }
+
+    const decoded = authService.verifyToken(token);
+    const user = await User.findById(decoded.id).lean();
+    if (!user || user.status !== 'active') {
+      return next();
+    }
+
+    req.user = {
+      ...user,
+      id: user._id?.toString(),
+    };
+    return next();
+  } catch (_error) {
+    return next();
+  }
+};
+
+/**
  * ==================================================================================
  * Role-Based Authorization Middleware
  * ==================================================================================
@@ -118,6 +154,7 @@ const isTeacherOrAdmin = authorize('teacher', 'admin');
 module.exports = {
   protect: authenticate,
   authenticate,
+  optionalAuthenticate,
   authorize,
   isAdmin,
   isTeacher,

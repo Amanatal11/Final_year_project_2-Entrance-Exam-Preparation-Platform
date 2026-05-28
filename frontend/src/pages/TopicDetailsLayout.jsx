@@ -43,23 +43,30 @@ const TopicDetailsLayout = ({ isStudent = false }) => {
     setProgressMessage('');
   }, [fetchTopic, topicId]);
 
-  useEffect(() => {
-    const fetchEligibility = async () => {
-      if (!isStudent || !topicId) return;
+  const refetchCompletionEligibility = useCallback(async () => {
+    if (!isStudent || !topicId) return;
 
-      try {
-        setIsLoadingEligibility(true);
-        const response = await getTopicCompletionEligibility(topicId);
-        setCompletionEligibility(response?.data || null);
-      } catch (_err) {
-        setCompletionEligibility(null);
-      } finally {
-        setIsLoadingEligibility(false);
-      }
-    };
-
-    fetchEligibility();
+    try {
+      setIsLoadingEligibility(true);
+      const response = await getTopicCompletionEligibility(topicId);
+      setCompletionEligibility(response?.data || null);
+    } catch (_err) {
+      setCompletionEligibility(null);
+    } finally {
+      setIsLoadingEligibility(false);
+    }
   }, [isStudent, topicId]);
+
+  useEffect(() => {
+    refetchCompletionEligibility();
+  }, [refetchCompletionEligibility]);
+
+  useEffect(() => {
+    if (!isStudent || !topicId) return;
+    const handler = () => refetchCompletionEligibility();
+    window.addEventListener('student-progress-refresh', handler);
+    return () => window.removeEventListener('student-progress-refresh', handler);
+  }, [isStudent, topicId, refetchCompletionEligibility]);
 
   const basePath = isStudent ? `/curriculum/topic/${topicId}` : `/teacher/topic/${topicId}`;
 

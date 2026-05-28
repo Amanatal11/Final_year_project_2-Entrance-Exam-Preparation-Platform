@@ -93,6 +93,22 @@ exports.searchExamQuestions = asyncHandler(async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const { subjectId, chapterId, topicId, year, q } = req.query;
+    const { role } = getRequester(req);
+
+    const hasFilter = Boolean(
+        (subjectId && String(subjectId).trim())
+        || (chapterId && String(chapterId).trim())
+        || (topicId && String(topicId).trim())
+        || (year !== undefined && year !== null && String(year).trim() !== '')
+        || (q && String(q).trim())
+    );
+
+    if (!hasFilter) {
+        return next(new ErrorResponse(
+            'Provide at least one filter: subjectId, chapterId, topicId, year, or q',
+            400
+        ));
+    }
 
     const pipeline = [
         {
@@ -138,8 +154,12 @@ exports.searchExamQuestions = asyncHandler(async (req, res, next) => {
         match.topic = new mongoose.Types.ObjectId(topicId);
     }
 
-    if (year) {
-        match['examPaperDoc.year'] = Number(year);
+    if (year !== undefined && year !== null && String(year).trim() !== '') {
+        const yearNum = Number(year);
+        if (!Number.isFinite(yearNum)) {
+            return next(new ErrorResponse('Invalid year format', 400));
+        }
+        match['examPaperDoc.year'] = yearNum;
     }
 
     if (q) {
@@ -164,11 +184,17 @@ exports.searchExamQuestions = asyncHandler(async (req, res, next) => {
     const rows = result[0]?.data || [];
     const total = result[0]?.meta?.[0]?.total || 0;
 
-    const data = rows.map((row) => ({
-      ...row,
-      questionText: normalizeExamQuestionStem(row.questionText),
-      examPaperDoc: sanitizeExamPaperDoc(row.examPaperDoc),
-    }));
+    const data = rows.map((row) => {
+      const item = {
+        ...row,
+        questionText: normalizeExamQuestionStem(row.questionText),
+        examPaperDoc: sanitizeExamPaperDoc(row.examPaperDoc),
+      };
+      if (role === 'student') {
+        delete item.correctAnswer;
+      }
+      return item;
+    });
 
     res.status(200).json({
         success: true,

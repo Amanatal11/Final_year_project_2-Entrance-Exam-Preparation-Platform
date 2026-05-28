@@ -9,6 +9,7 @@ import {
   X,
   Bell,
   CircleUserRound,
+  Award,
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { getUnreadNotifications, markNotificationRead } from '../services/engagement';
@@ -24,7 +25,8 @@ const TeacherLayout = () => {
 
   const pathname = location.pathname || '';
   const isQaNav = pathname.startsWith('/teacher/qa');
-  const isCourseNav = pathname.startsWith('/teacher') && !isQaNav;
+  const isExamsNav = pathname.startsWith('/teacher/exams');
+  const isCourseNav = pathname.startsWith('/teacher') && !isQaNav && !isExamsNav;
 
   useEffect(() => {
     const fetchUnread = async () => {
@@ -47,7 +49,7 @@ const TeacherLayout = () => {
     }
   };
 
-  const headerTitle = isQaNav ? 'Q&A Management' : 'Course Management';
+  const headerTitle = isQaNav ? 'Q&A Management' : isExamsNav ? 'Previous Year Exams' : 'Course Management';
 
   const navItemClass = (active) =>
     `flex items-center gap-3 w-full px-3 py-2.5 transition-all font-semibold rounded-lg ${
@@ -107,6 +109,13 @@ const TeacherLayout = () => {
             >
               <MessageCircle size={20} /> Q&A Management
             </Link>
+            <Link
+              to="/teacher/exams"
+              className={navItemClass(isExamsNav)}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Award size={20} /> Previous Year Exams (FR-07)
+            </Link>
           </div>
         </nav>
         <div className={`p-4 border-t border-outline/5 ${isSidebarCollapsed ? 'hidden' : ''}`}>
@@ -158,6 +167,13 @@ const TeacherLayout = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <MessageCircle size={20} /> Q&A Management
+              </Link>
+              <Link
+                to="/teacher/exams"
+                className={`${navItemClass(isExamsNav)}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Award size={20} /> Previous Year Exams (FR-07)
               </Link>
             </nav>
             <div className="p-3 border-t border-outline/5 shrink-0 bg-background">
