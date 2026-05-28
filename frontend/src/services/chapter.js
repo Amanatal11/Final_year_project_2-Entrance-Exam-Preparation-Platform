@@ -1,13 +1,15 @@
 import api from './api';
 
+const normalizeList = (payload) => (Array.isArray(payload) ? payload : (payload?.data || []));
+
 export const getChaptersBySubject = async (subjectId) => {
   const response = await api.get(`/content/subjects/${subjectId}/chapters`);
-  return response.data;
+  return normalizeList(response.data);
 };
 
 export const getTopicsByChapter = async (chapterId) => {
   const response = await api.get(`/content/chapters/${chapterId}/topics`);
-  return response.data;
+  return normalizeList(response.data);
 };
 
 export const createChapter = async (subjectId, chapterData) => {

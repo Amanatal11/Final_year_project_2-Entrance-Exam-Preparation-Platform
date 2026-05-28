@@ -131,7 +131,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
       return;
     }
     getChaptersBySubject(subjectId)
-      .then((res) => setChapters(res?.data || []))
+      .then((list) => setChapters(Array.isArray(list) ? list : []))
       .catch(() => setChapters([]));
   }, [subjectId]);
 
@@ -141,7 +141,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
       return;
     }
     getTopicsByChapter(chapterId)
-      .then((res) => setTopics(res?.data || []))
+      .then((list) => setTopics(Array.isArray(list) ? list : []))
       .catch(() => setTopics([]));
   }, [chapterId]);
 
@@ -218,29 +218,6 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
 
     fetchQuestions();
   }, [subjectId, chapterId, topicId, year, debouncedQuery, page, canFetchQuestions]);
-
-  const selectedSubject = filteredSubjects.find((s) => String(s._id) === String(subjectId))
-    || subjects.find((s) => String(s._id) === String(subjectId));
-  const selectedChapter = chapters.find((c) => String(c._id) === String(chapterId));
-  const selectedTopic = topics.find((t) => String(t._id) === String(topicId));
-
-  const getTopicName = (q) => {
-    if (selectedTopic && String(q.topic) === String(selectedTopic._id)) {
-      return formatTopicTitleDisplay(selectedTopic.topicName);
-    }
-    const fromList = topics.find((t) => String(t._id) === String(q.topic));
-    if (fromList) return formatTopicTitleDisplay(fromList.topicName);
-    if (q.topicDoc?.topicName) return formatTopicTitleDisplay(q.topicDoc.topicName);
-    return null;
-  };
-
-  const getChapterName = (q) => {
-    if (selectedChapter?.chapterName) return selectedChapter.chapterName;
-    const chapterFromTopic = q.topicDoc?.chapter;
-    if (!chapterFromTopic) return null;
-    const match = chapters.find((c) => String(c._id) === String(chapterFromTopic));
-    return match?.chapterName || null;
-  };
 
   const getExamQuestionBookmark = (questionId) => bookmarks.find((bookmark) => (
     bookmark.resourceType === 'exam-question' && String(bookmark.resourceId) === String(questionId)
@@ -338,18 +315,6 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
     setExamFeedback({});
   };
 
-  const buildContextChips = (q) => {
-    const chips = [];
-    if (gradeLevel) chips.push(`Grade ${gradeLevel}`);
-    if (selectedSubject?.subjectName) chips.push(selectedSubject.subjectName);
-    const chapterName = getChapterName(q);
-    if (chapterName) chips.push(chapterName);
-    const topicName = getTopicName(q);
-    if (topicName) chips.push(topicName);
-    if (q.examPaperDoc?.year != null) chips.push(`${q.examPaperDoc.year} E.C.`);
-    return chips;
-  };
-
   const hasRefinementFilters = Boolean(chapterId || topicId || year || debouncedQuery);
 
   return (
@@ -412,7 +377,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
             >
               <option value="">All chapters</option>
               {chapters.map((c) => (
-                <option key={c._id} value={c._id}>{c.chapterName}</option>
+                <option key={String(c._id)} value={String(c._id)}>{c.chapterName}</option>
               ))}
             </select>
           </div>
@@ -428,7 +393,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
             >
               <option value="">All topics</option>
               {topics.map((t) => (
-                <option key={t._id} value={t._id}>{formatTopicTitleDisplay(t.topicName)}</option>
+                <option key={String(t._id)} value={String(t._id)}>{formatTopicTitleDisplay(t.topicName)}</option>
               ))}
             </select>
           </div>
@@ -521,7 +486,7 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
               onConfirmAnswer={handleConfirmExamAnswer}
               onToggleBookmark={isStudent ? handleToggleExamBookmark : undefined}
               isBookmarked={Boolean(getExamQuestionBookmark(q._id))}
-              contextChips={buildContextChips(q)}
+              showMetadata={false}
               teacherTopicLink={!isStudent && q.topic ? `/teacher/topic/${q.topic}/exam` : undefined}
             />
           ))}

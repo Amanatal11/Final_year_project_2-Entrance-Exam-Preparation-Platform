@@ -19,6 +19,7 @@ const ExamQuestionCard = ({
   onEdit,
   onDelete,
   contextChips = [],
+  showMetadata = true,
   teacherTopicLink,
 }) => {
   const hasFeedback = Boolean(feedback);
@@ -41,7 +42,7 @@ const ExamQuestionCard = ({
                   {question.examPaperDoc.year} E.C.
                 </span>
               ) : null}
-              {contextChips.map((chip) => (
+              {showMetadata && contextChips.map((chip) => (
                 <span
                   key={chip}
                   className="inline-block px-2 py-0.5 rounded-lg bg-surface text-[9px] font-black uppercase tracking-widest border border-outline/10 text-on-surface-variant/60"
@@ -49,7 +50,7 @@ const ExamQuestionCard = ({
                   {chip}
                 </span>
               ))}
-              {question.tag ? (
+              {showMetadata && question.tag ? (
                 <span className="inline-block px-2 py-0.5 rounded-lg bg-surface text-[9px] font-black uppercase tracking-widest border border-outline/10 text-on-surface-variant/60">
                   {question.tag}
                 </span>
