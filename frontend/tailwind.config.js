@@ -7,7 +7,7 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          'Roboto',
+          'IBM Plex Sans',
           'ui-sans-serif',
           'system-ui',
           'sans-serif',
@@ -15,7 +15,7 @@ export default {
           'Segoe UI Emoji',
         ],
         mono: [
-          'Roboto Mono',
+          'IBM Plex Mono',
           'ui-monospace',
           'SFMono-Regular',
           'Menlo',
