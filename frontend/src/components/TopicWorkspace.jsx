@@ -383,7 +383,7 @@ const TopicWorkspace = ({ topic, chapter, subject, onBack, fetchTopicContent, to
                         <div className="flex items-center gap-4">
                           <div className={`px-2 py-1 rounded text-[8px] font-black uppercase ${
                             e.difficulty === 'Easy' ? 'bg-green-100 text-green-700' :
-                            e.difficulty === 'Medium' ? 'bg-orange-100 text-orange-700' :
+                            e.difficulty === 'Medium' ? 'bg-blue-100 text-blue-700' :
                             'bg-red-100 text-red-700'
                           }`}>
                             {e.difficulty}
