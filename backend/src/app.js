@@ -162,6 +162,7 @@ app.use('/api/bookmarks', require('./routes/bookmarkRoutes'));
 app.use('/api/questions', require('./routes/questionRoutes'));
 app.use('/api/progress', require('./routes/progressRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/discussions', require('./routes/discussionRoutes'));
 
 // 404 handler
 app.use((req, res) => {
