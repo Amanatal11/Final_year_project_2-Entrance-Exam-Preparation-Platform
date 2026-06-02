@@ -179,9 +179,30 @@ body .bg-surface\/50 {
   background-color: var(--color-surface);
 }
 
+body .bg-white {
+  background-color: var(--color-card);
+}
+
 body .text-on-surface-variant\/60,
 body .text-on-surface-variant\/70 {
   color: var(--color-on-surface-variant);
+}
+
+.dark body .text-on-surface-variant\/80 {
+  color: color-mix(in srgb, var(--color-on-surface-variant) 88%, var(--color-on-surface));
+}
+
+body .border-outline\/10,
+body .border-outline\/20 {
+  border-color: color-mix(in srgb, var(--color-outline) 24%, transparent);
+}
+
+body .bg-primary-container.text-white {
+  color: var(--color-on-primary);
+}
+
+.dark body .bg-primary-container.text-white {
+  color: var(--color-on-primary);
 }
 
 .dark body .bg-white {

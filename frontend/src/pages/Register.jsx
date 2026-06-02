@@ -107,7 +107,7 @@ const Register = () => {
           /* Step 1: Account Information */
           <div className="w-full max-w-[800px] animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Form Panel */}
-            <div className="bg-card rounded-xl border border-outline-variant p-4 sm:p-stack-lg shadow-[0px_8px_24px_rgba(0,0,0,0.08)] min-w-0">
+            <div className="bg-card rounded-xl border border-outline-variant p-4 sm:p-stack-lg shadow-sm min-w-0">
               <div className="mb-stack-lg flex justify-between items-end">
                 <div>
                   <h3 className="text-2xl font-semibold text-on-surface mb-2">Create Account</h3>

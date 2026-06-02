@@ -55,7 +55,7 @@ const TeacherLayout = () => {
     `flex items-center gap-3 w-full px-3 py-2.5 transition-all font-semibold rounded-lg ${
       active
         ? 'bg-primary-container/10 text-primary-container'
-        : 'bg-white text-on-surface-variant hover:bg-primary-container/5 border border-transparent'
+        : 'bg-card text-on-surface-variant hover:bg-primary-container/5 border border-transparent'
     }`;
 
   return (
@@ -64,7 +64,7 @@ const TeacherLayout = () => {
       <aside
         className={`${
           isSidebarCollapsed ? 'w-[86px]' : 'w-[300px]'
-        } bg-background border-r border-outline/10 hidden lg:flex flex-col z-50 shrink-0 h-full sticky top-0 transition-all duration-300 shadow-[4px_0_12px_rgba(0,0,0,0.02)]`}
+        } bg-card border-r border-outline/10 hidden lg:flex flex-col z-50 shrink-0 h-full sticky top-0 transition-all duration-300 shadow-[4px_0_16px_rgba(15,23,42,0.06)]`}
       >
         <div
           className={`h-20 flex items-center border-b border-outline/5 px-4 ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}
@@ -82,7 +82,7 @@ const TeacherLayout = () => {
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed((value) => !value)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-white border border-outline/10 text-primary-container font-bold text-xs hover:bg-primary-container/5 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-card border border-outline/10 text-primary-container font-bold text-xs hover:bg-primary-container/5 transition-colors"
             title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isSidebarCollapsed ? <Menu size={18} /> : <X size={18} />}

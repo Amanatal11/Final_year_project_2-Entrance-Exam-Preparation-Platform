@@ -83,7 +83,7 @@ const ResetPassword = () => {
       </header>
 
       <main className="flex-grow flex items-center justify-center pt-20 sm:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 w-full min-w-0">
-        <div className="w-full max-w-lg bg-card rounded-lg border border-outline-variant p-stack-lg shadow-[0px_4px_12px_rgba(0,0,0,0.05)] flex flex-col justify-center">
+        <div className="w-full max-w-lg bg-card rounded-lg border border-outline-variant p-stack-lg shadow-sm flex flex-col justify-center">
           <div className="mb-stack-lg">
             <h3 className="text-2xl font-semibold text-on-surface mb-2">Reset Password</h3>
             <p className="text-body-md text-on-surface-variant">Define your new secure portal password.</p>
