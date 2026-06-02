@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { BookOpen, Trash2, CheckCircle2, FileText, X, Paperclip, UploadCloud, Edit2 } from 'lucide-react';
 import api, { resolvePublicApiOrigin } from '../services/api';
@@ -81,7 +81,7 @@ const TopicConcept = () => {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
   };
 
-  const fetchConcepts = async () => {
+  const fetchConcepts = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get(`/content/topics/${topic._id}/concepts`);
@@ -91,11 +91,11 @@ const TopicConcept = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [topic?._id]);
 
   useEffect(() => {
     if (topic?._id) fetchConcepts();
-  }, [topic?._id]);
+  }, [topic?._id, fetchConcepts]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -112,12 +112,18 @@ const TopicConcept = () => {
   };
 
   const [editingId, setEditingId] = useState(null);
+  const getConceptAssetUrl = (concept) => {
+    const relativePath = concept?.contentPdfUrl || concept?.contentImageUrl;
+    if (!relativePath) return null;
+    return `${resolvePublicApiOrigin()}${relativePath}`;
+  };
 
   const handleEdit = (concept) => {
     setEditingId(concept._id);
-    setNewConcept({ title: concept.title, content: concept.content });
-    if (concept.contentImageUrl) {
-      setFilePreview(`${resolvePublicApiOrigin()}${concept.contentImageUrl}`);
+    setNewConcept({ title: concept.title || '', content: concept.content || '' });
+    const assetUrl = getConceptAssetUrl(concept);
+    if (assetUrl && !concept.contentPdfUrl) {
+      setFilePreview(assetUrl);
     } else {
       setFilePreview(null);
     }
@@ -136,8 +142,10 @@ const TopicConcept = () => {
     if (!newConcept.title.trim()) {
       return showToast('Concept title is required.', 'error');
     }
-    if (!newConcept.content.trim()) {
-      return showToast('Concept content is required.', 'error');
+    const hasPdfUpload = selectedFile?.type === 'application/pdf';
+    const hasContent = Boolean(newConcept.content.trim());
+    if (!hasContent && !hasPdfUpload && !editingId) {
+      return showToast('Add concept text or upload a PDF note.', 'error');
     }
 
     setIsSaving(true);
@@ -244,7 +252,7 @@ const TopicConcept = () => {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">
-                  Supporting Assets (Images/PDF)
+                  Supporting Assets (Image/PDF, Optional)
                 </label>
                 <div
                   role="button"
@@ -308,7 +316,7 @@ const TopicConcept = () => {
                       <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                         Click to upload assets
                       </p>
-                      <p className="text-[10px] text-outline mt-1 font-medium">Max size: 20MB (JPG, PNG, PDF)</p>
+                      <p className="text-[10px] text-outline mt-1 font-medium">Max size: 10MB (JPG, PNG, WEBP, GIF, PDF)</p>
                     </div>
                   )}
                 </div>
@@ -348,7 +356,12 @@ const TopicConcept = () => {
             </div>
           ) : concepts.length > 0 ? (
             <div className={`space-y-8 ${isStudent ? '' : ''}`}>
-              {concepts.map((c) => (
+              {concepts.map((c) => {
+                const pdfAsset = c.contentPdfUrl || (c.contentImageUrl && c.contentImageUrl.toLowerCase().endsWith('.pdf') ? c.contentImageUrl : '');
+                const imageAsset = !pdfAsset ? c.contentImageUrl : '';
+                const pdfUrl = pdfAsset ? `${resolvePublicApiOrigin()}${pdfAsset}` : '';
+                const imageUrl = imageAsset ? `${resolvePublicApiOrigin()}${imageAsset}` : '';
+                return (
                 <article
                   key={c._id}
                   className={`flex flex-col gap-6 group transition-all duration-300 min-w-0 ${
@@ -382,7 +395,7 @@ const TopicConcept = () => {
                         >
                           {formatTopicTitleDisplay(c.title || '')}
                         </h4>
-                        <ConceptBody content={c.content} isStudent={isStudent} />
+                        <ConceptBody content={c.content || ''} isStudent={isStudent} />
                       </div>
                     </div>
                     {!isStudent && (
@@ -407,30 +420,47 @@ const TopicConcept = () => {
                     )}
                   </div>
 
-                  {c.contentImageUrl && (
+                  {(pdfUrl || imageUrl) && (
                     <div
                       className={`rounded-xl overflow-hidden border border-outline/10 bg-surface/50 max-w-full ${isStudent ? '' : 'sm:ml-[72px]'}`}
                     >
-                      {c.contentImageUrl.toLowerCase().endsWith('.pdf') ? (
-                        <div className="flex items-center gap-3 p-5">
-                          <div className="w-10 h-10 bg-error/10 text-error rounded-lg flex items-center justify-center">
-                            <FileText size={20} />
+                      {pdfUrl ? (
+                        <div className="p-5 space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-error/10 text-error rounded-lg flex items-center justify-center">
+                              <FileText size={20} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-on-surface">Supporting document (PDF)</p>
+                              <a
+                                href={pdfUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[10px] text-primary-container font-semibold uppercase tracking-wider hover:underline mt-1 inline-block"
+                              >
+                                Open in new tab
+                              </a>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-semibold text-on-surface">Supporting document (PDF)</p>
-                            <a
-                              href={`${resolvePublicApiOrigin()}${c.contentImageUrl}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[10px] text-primary-container font-semibold uppercase tracking-wider hover:underline mt-1 inline-block"
-                            >
-                              Download file
-                            </a>
+                          <div className="rounded-lg overflow-hidden border border-outline/10 bg-white">
+                            <object data={pdfUrl} type="application/pdf" className="w-full h-[380px] sm:h-[520px]">
+                              <div className="p-4">
+                                <p className="text-sm text-on-surface mb-2">PDF preview is not supported in this browser.</p>
+                                <a
+                                  href={pdfUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-sm text-primary-container font-semibold hover:underline"
+                                >
+                                  Open the PDF file
+                                </a>
+                              </div>
+                            </object>
                           </div>
                         </div>
                       ) : (
                         <img
-                          src={`${resolvePublicApiOrigin()}${c.contentImageUrl}`}
+                          src={imageUrl}
                           alt=""
                           className="max-h-[min(50vh,28rem)] w-full max-w-full mx-auto object-contain bg-surface/30"
                         />
@@ -438,7 +468,8 @@ const TopicConcept = () => {
                     </div>
                   )}
                 </article>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="bg-surface/50 border border-dashed border-outline/20 rounded-xl py-24 text-center">
