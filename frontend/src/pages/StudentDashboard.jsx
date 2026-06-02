@@ -455,7 +455,7 @@ const StudentDashboard = () => {
                 <div className="bg-white rounded-2xl border border-outline/10 p-4 sm:p-6 min-w-0 overflow-hidden">
                   <div className="flex items-center gap-2 mb-4 min-w-0">
                     <Search size={18} className="text-primary-container shrink-0" />
-                    <h4 className="font-bold">Search Topics (FR-12)</h4>
+            <h4 className="font-bold">Search Topics</h4>
                   </div>
                   <input
                     value={topicSearch}
@@ -477,7 +477,7 @@ const StudentDashboard = () => {
                 <div className="bg-white rounded-2xl border border-outline/10 p-4 sm:p-6 min-w-0 overflow-hidden">
                   <div className="flex items-center gap-2 mb-4 min-w-0">
                     <TriangleAlert size={18} className="text-primary-container shrink-0" />
-                    <h4 className="font-bold">Report Issue (FR-14)</h4>
+                    <h4 className="font-bold">Report Issue</h4>
                   </div>
                   <form onSubmit={handleIssueSubmit} className="space-y-3">
                     <input
@@ -513,7 +513,7 @@ const StudentDashboard = () => {
                 <div className="bg-white rounded-2xl border border-outline/10 p-4 sm:p-6 min-w-0 overflow-hidden">
                   <div className="flex items-center gap-2 mb-4 min-w-0">
                     <MessageSquarePlus size={18} className="text-primary-container shrink-0" />
-                    <h4 className="font-bold">Ask Topic Question (FR-16)</h4>
+                    <h4 className="font-bold">Ask Topic Question</h4>
                   </div>
                   <form onSubmit={handleAskQuestion} className="space-y-3">
                     <input
