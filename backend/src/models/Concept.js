@@ -43,7 +43,11 @@ const conceptSchema = new Schema(
     },
     content: {
       type: String,
-      required: [true, 'Concept content is required.'],
+      trim: true,
+    },
+    contentPdfUrl: {
+      type: String,
+      trim: true,
     },
     contentImageUrl: {
       type: String,
@@ -64,6 +68,15 @@ const conceptSchema = new Schema(
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   }
 );
+
+conceptSchema.pre('validate', function validateConceptBody(next) {
+  const hasText = Boolean(String(this.content || '').trim());
+  const hasPdf = Boolean(String(this.contentPdfUrl || '').trim());
+  if (!hasText && !hasPdf) {
+    this.invalidate('content', 'Concept must include text content or a PDF file.');
+  }
+  next();
+});
 
 /**
  * ==================================================================================

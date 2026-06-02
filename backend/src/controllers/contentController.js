@@ -18,6 +18,15 @@ const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
  * ==================================================================================
  */
 class ContentController {
+  buildConceptAssetPatch = (file) => {
+    if (!file) return {};
+    const fileUrl = `/uploads/concepts/${file.filename}`;
+    if (file.mimetype === 'application/pdf') {
+      return { contentPdfUrl: fileUrl, contentImageUrl: undefined };
+    }
+    return { contentImageUrl: fileUrl, contentPdfUrl: undefined };
+  };
+
   notifyStudentsOfSubjectUpdate = async (subjectId, title, message) => {
     await notifyStudentsOfSubjectUpdate(subjectId, title, message);
   };
@@ -344,18 +353,23 @@ class ContentController {
         return res.status(400).json({ message: 'Invalid topic id format.' });
       }
 
-      if (!req.body?.content || !req.body?.title) {
-        return res.status(400).json({ message: 'Title and content are required.' });
+      const title = String(req.body?.title || '').trim();
+      const content = String(req.body?.content || '').trim();
+      const hasPdfUpload = req.file?.mimetype === 'application/pdf';
+
+      if (!title) {
+        return res.status(400).json({ message: 'Title is required.' });
+      }
+
+      if (!content && !hasPdfUpload) {
+        return res.status(400).json({ message: 'Provide text content or upload a PDF.' });
       }
 
       const conceptData = {
-        title: req.body.title,
-        content: req.body.content,
+        title,
+        content,
+        ...this.buildConceptAssetPatch(req.file),
       };
-
-      if (req.file) {
-        conceptData.contentImageUrl = `/uploads/concepts/${req.file.filename}`;
-      }
 
       const concept = await contentService.addConceptToTopic(conceptData, topicId);
       const topicDoc = await Topic.findById(topicId).select('chapter');
@@ -464,8 +478,13 @@ class ContentController {
       }
 
       const updateData = { ...req.body };
-      if (req.file) {
-        updateData.contentImageUrl = `/uploads/concepts/${req.file.filename}`;
+      Object.assign(updateData, this.buildConceptAssetPatch(req.file));
+
+      if (typeof updateData.title === 'string') {
+        updateData.title = updateData.title.trim();
+      }
+      if (typeof updateData.content === 'string') {
+        updateData.content = updateData.content.trim();
       }
 
       const concept = await contentService.updateConcept(conceptId, updateData);

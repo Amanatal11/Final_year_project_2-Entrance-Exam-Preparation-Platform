@@ -33,16 +33,24 @@ const conceptStorage = multer.diskStorage({
   },
 });
 
-const fileFilter = (req, file, cb) => {
+const imageFileFilter = (req, file, cb) => {
   if (!file.mimetype.startsWith('image/')) {
     return cb(new Error('Only image files are allowed'));
   }
   cb(null, true);
 };
 
+const conceptAssetFileFilter = (req, file, cb) => {
+  const allowedMimeTypes = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']);
+  if (!allowedMimeTypes.has(file.mimetype)) {
+    return cb(new Error('Only image and PDF files are allowed'));
+  }
+  cb(null, true);
+};
+
 const profileImageUpload = multer({
   storage: profileStorage,
-  fileFilter,
+  fileFilter: imageFileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
@@ -50,7 +58,7 @@ const profileImageUpload = multer({
 
 const conceptImageUpload = multer({
   storage: conceptStorage,
-  fileFilter,
+  fileFilter: conceptAssetFileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB for diagrams
   },
