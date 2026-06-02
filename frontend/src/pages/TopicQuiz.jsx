@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { BrainCircuit, Trash2, Plus, ChevronLeft, Save, CheckCircle2, ListChecks, HelpCircle, Edit2 } from 'lucide-react';
 import api from '../services/api';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 const TopicQuiz = () => {
   const { topic, isStudent } = useOutletContext();
@@ -833,7 +834,11 @@ const TopicQuiz = () => {
         <div className="space-y-6">
           <h4 className="text-xs font-black uppercase tracking-[0.2em] text-outline px-2">{isStudent ? 'Knowledge Assessments' : 'Published Quizzes'} ({quizzes.length})</h4>
           {loading ? (
-            <div className="flex justify-center py-20 bg-white rounded-xl border border-outline/5"><div className="w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div></div>
+            <div className="space-y-4">
+              <SkeletonCard />
+              <SkeletonCard />
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </div>
           ) : quizzes.length > 0 ? (
             <div className="space-y-4">
               {quizzes.map(q => (

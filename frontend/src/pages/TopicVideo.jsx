@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Bot, PlayCircle, Trash2, Save, Video, VideoOff, Edit2 } from 'lucide-react';
 import api from '../services/api';
 import { formatTopicTitleDisplay } from '../utils/formatTopicDisplayText';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 const TopicVideo = () => {
   const { topic, isStudent } = useOutletContext();
@@ -177,7 +178,11 @@ const TopicVideo = () => {
           <div className="space-y-4">
             <label className="text-[10px] font-black uppercase tracking-widest text-outline ml-1">Video Library</label>
             {loading ? (
-              <div className="flex justify-center p-6 sm:p-8"><div className="w-6 h-6 border-2 border-primary-container border-t-transparent rounded-full animate-spin" /></div>
+              <div className="space-y-4">
+                <SkeletonCard />
+                <SkeletonCard />
+                <Skeleton className="h-40 w-full rounded-xl" />
+              </div>
             ) : videos.length > 0 ? (
               <div className="space-y-4">
                 {videos.map(v => (

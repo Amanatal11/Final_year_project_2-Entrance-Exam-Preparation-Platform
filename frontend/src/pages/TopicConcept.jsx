@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { BookOpen, Trash2, CheckCircle2, FileText, X, Paperclip, UploadCloud, Edit2 } from 'lucide-react';
 import api, { resolvePublicApiOrigin } from '../services/api';
 import { formatTopicTitleDisplay, formatTopicBodyText } from '../utils/formatTopicDisplayText';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 /** Split on blank lines so long pasted text reads as formal paragraphs */
 const toParagraphBlocks = (text) => {
@@ -351,8 +352,10 @@ const TopicConcept = () => {
             {!isStudent && `(${concepts.length})`}
           </h4>
           {loading ? (
-            <div className="flex justify-center py-20 bg-card rounded-xl border border-outline/5">
-              <div className="w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full animate-spin" />
+            <div className="space-y-4">
+              <SkeletonCard />
+              <SkeletonCard />
+              <Skeleton className="h-28 w-full rounded-xl" />
             </div>
           ) : concepts.length > 0 ? (
             <div className={`space-y-8 ${isStudent ? '' : ''}`}>

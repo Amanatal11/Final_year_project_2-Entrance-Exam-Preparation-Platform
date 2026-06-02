@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Bookmark, ClipboardList, Trash2, CheckCircle2, Save, Edit2 } from 'lucide-react';
 import api from '../services/api';
 import { addBookmark, getBookmarks, removeBookmark } from '../services/engagement';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 const TopicExercise = () => {
   const { topic, isStudent } = useOutletContext();
@@ -343,7 +344,11 @@ const TopicExercise = () => {
         </div>
         
         {loading ? (
-          <div className="flex justify-center py-20 bg-white rounded-xl border border-outline/5"><div className="w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div></div>
+          <div className="space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
         ) : exercises.length > 0 ? (
           <div className="grid grid-cols-1 gap-6">
             {exercises.map((ex, i) => (

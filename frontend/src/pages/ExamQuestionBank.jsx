@@ -16,6 +16,7 @@ import {
 import { addBookmark, getBookmarks, removeBookmark } from '../services/engagement';
 import { formatTopicTitleDisplay } from '../utils/formatTopicDisplayText';
 import { GRADE_OPTIONS, gradeMatchesFilter, gradeKeyFromValue } from '../utils/grade';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
   const { user } = useContext(AuthContext);
@@ -463,8 +464,10 @@ const ExamQuestionBank = ({ isStudent = false, selectedGrade = '' }) => {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-20 bg-white rounded-xl border border-outline/5">
-          <div className="w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full animate-spin" />
+        <div className="space-y-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : !canFetchQuestions ? (
         <div className="bg-surface/50 border border-dashed border-outline/20 rounded-xl py-24 text-center">

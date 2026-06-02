@@ -5,6 +5,7 @@ import api from '../services/api';
 import { getTopicsByChapter, createTopic, updateTopic, deleteTopic } from '../services/chapter';
 import { useAuth } from '../context/AuthContext';
 import { formatTopicTitleDisplay, formatTopicBodyText } from '../utils/formatTopicDisplayText';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 const TopicManagement = ({ isStudent = false }) => {
   const { chapterId } = useParams();
@@ -136,7 +137,11 @@ const TopicManagement = ({ isStudent = false }) => {
         </div>
         
         {loading ? (
-          <div className="flex justify-center p-12"><div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div></div>
+          <div className="space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {isAdding && (

@@ -5,6 +5,7 @@ import api from '../services/api';
 import { getChaptersBySubject, createChapter, updateChapter, deleteChapter } from '../services/chapter';
 import { getSubjectChapterProgress } from '../services/engagement';
 import { useAuth } from '../context/AuthContext';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 const ChapterManagement = ({ isStudent = false }) => {
   const { subjectId } = useParams();
@@ -161,7 +162,11 @@ const ChapterManagement = ({ isStudent = false }) => {
         </div>
         
         {loading ? (
-          <div className="flex justify-center p-12"><div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div></div>
+          <div className="space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {isAdding && (

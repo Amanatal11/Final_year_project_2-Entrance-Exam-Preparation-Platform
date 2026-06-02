@@ -7,6 +7,7 @@ import { addBookmark, getBookmarks, removeBookmark } from '../services/engagemen
 import { normalizeExamQuestionStem } from '../utils/examQuestionDisplay';
 import { gradeKeyFromValue } from '../utils/grade';
 import ExamQuestionCard from '../components/exam/ExamQuestionCard';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 
 const buildEntranceExamsLink = ({ isStudent, subject }) => {
   const base = isStudent ? '/curriculum/exams' : '/teacher/exams';
@@ -356,7 +357,11 @@ const TopicExam = () => {
           </div>
         </div>
         {loading ? (
-          <div className="flex justify-center py-20 bg-white rounded-xl border border-outline/5"><div className="w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div></div>
+          <div className="space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
         ) : examQuestions.length > 0 ? (
           <div className="grid grid-cols-1 gap-6">
             {examQuestions.map((q, i) => (
