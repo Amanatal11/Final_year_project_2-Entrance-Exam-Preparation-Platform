@@ -4,14 +4,13 @@ import { useForm } from 'react-hook-form';
 import { registerUser, verifyEmail } from '../services/auth';
 import { AuthContext } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
-import { Eye, EyeOff, ShieldCheck, Mail, Lock, Phone, User, ArrowRight, ArrowLeft, BookOpen, CheckCircle, FlaskConical, Globe } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Mail, Lock, User, ArrowRight, ArrowLeft, BookOpen, CheckCircle, FlaskConical, Globe } from 'lucide-react';
 
 const FIELD_NAME_MAP = {
   firstName: 'First name',
   lastName: 'Last name',
   email: 'Email',
   password: 'Password',
-  phoneNumber: 'Phone number',
   role: 'Role',
   profileImage: 'Profile image',
 };
@@ -40,7 +39,6 @@ const Register = () => {
       confirmEmail: '',
       password: '',
       confirmPassword: '',
-      phoneNumber: '',
       stream: ''
     }
   });
@@ -55,7 +53,7 @@ const Register = () => {
   const email = watch('email');
 
   const onBasicInfoSubmit = async (data) => {
-    const isValid = await trigger(['firstName', 'lastName', 'email', 'confirmEmail', 'password', 'confirmPassword', 'phoneNumber']);
+    const isValid = await trigger(['firstName', 'lastName', 'email', 'confirmEmail', 'password', 'confirmPassword']);
     if (isValid) {
       setRegistrationData(data);
       setStep(2);
@@ -77,10 +75,6 @@ const Register = () => {
       formData.append('password', data.password);
       formData.append('role', 'student');
       if (data.stream) formData.append('stream', data.stream);
-
-      if (data.phoneNumber?.trim()) {
-        formData.append('phoneNumber', data.phoneNumber.trim());
-      }
 
       if (data.profileImageFile?.[0]) {
         formData.append('profileImageFile', data.profileImageFile[0]);
@@ -228,20 +222,6 @@ const Register = () => {
                     </button>
                   </div>
                   {errors.confirmPassword && <p className="mt-1 text-xs text-error">{errors.confirmPassword.message}</p>}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-on-surface mb-2" htmlFor="phoneNumber">Phone Number</label>
-                  <div className="relative">
-                    <input
-                      id="phoneNumber"
-                      {...register('phoneNumber', { required: 'Required' })}
-                      className="w-full px-4 py-3 pl-11 rounded-lg border border-outline/20 focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all"
-                      placeholder="+251 9XX XXX XXXX"
-                    />
-                    <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-outline" />
-                  </div>
-                  {errors.phoneNumber && <p className="mt-1 text-xs text-error">{errors.phoneNumber.message}</p>}
                 </div>
 
                 <div className="md:col-span-2 pt-4">
