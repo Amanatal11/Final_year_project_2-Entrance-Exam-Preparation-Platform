@@ -215,7 +215,7 @@ const TopicConcept = () => {
 
       <div className={`grid grid-cols-1 ${isStudent ? '' : 'lg:grid-cols-2'} gap-6 sm:gap-10 min-w-0`}>
         {!isStudent && (
-          <div className="bg-white p-4 sm:p-10 rounded-xl border border-outline-variant shadow-[0px_8px_24px_rgba(0,0,0,0.08)] space-y-8 h-fit">
+          <div className="bg-card p-4 sm:p-10 rounded-xl border border-outline-variant shadow-sm space-y-8 h-fit">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-bold text-on-surface">{editingId ? 'Edit Concept' : 'Concept Builder'}</h3>
@@ -235,7 +235,7 @@ const TopicConcept = () => {
                   value={newConcept.title}
                   onChange={(e) => setNewConcept({ ...newConcept, title: e.target.value })}
                   placeholder="e.g. Fundamental Principles of..."
-                  className="w-full bg-white border border-outline/20 px-6 py-4 rounded-xl font-bold text-on-surface focus:border-primary-container outline-none transition-all shadow-sm"
+                  className="w-full bg-field border border-outline/20 px-6 py-4 rounded-xl font-bold text-on-surface focus:border-primary-container outline-none transition-all shadow-sm"
                 />
               </div>
 
@@ -246,7 +246,7 @@ const TopicConcept = () => {
                   onChange={(e) => setNewConcept({ ...newConcept, content: e.target.value })}
                   placeholder="Explain the topic in depth..."
                   rows="6"
-                  className="w-full bg-white border border-outline/20 px-6 py-4 rounded-xl font-medium text-on-surface resize-none focus:border-primary-container outline-none transition-all shadow-sm"
+                  className="w-full bg-field border border-outline/20 px-6 py-4 rounded-xl font-medium text-on-surface resize-none focus:border-primary-container outline-none transition-all shadow-sm"
                 />
               </div>
 
@@ -289,7 +289,7 @@ const TopicConcept = () => {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-3 bg-white p-4 rounded-xl border border-outline/10 shadow-sm">
+                        <div className="flex items-center gap-3 bg-card p-4 rounded-xl border border-outline/10 shadow-sm">
                           <div className="p-2 bg-primary-container/10 rounded-lg text-primary-container">
                             {selectedFile.type.includes('pdf') ? <FileText size={20} /> : <Paperclip size={20} />}
                           </div>
@@ -327,7 +327,7 @@ const TopicConcept = () => {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="flex-grow bg-white border border-outline/20 text-on-surface px-6 py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface transition-all"
+                    className="flex-grow bg-field border border-outline/20 text-on-surface px-6 py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface transition-all"
                   >
                     Cancel
                   </button>
@@ -351,7 +351,7 @@ const TopicConcept = () => {
             {!isStudent && `(${concepts.length})`}
           </h4>
           {loading ? (
-            <div className="flex justify-center py-20 bg-white rounded-xl border border-outline/5">
+            <div className="flex justify-center py-20 bg-card rounded-xl border border-outline/5">
               <div className="w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full animate-spin" />
             </div>
           ) : concepts.length > 0 ? (
@@ -367,7 +367,7 @@ const TopicConcept = () => {
                   className={`flex flex-col gap-6 group transition-all duration-300 min-w-0 ${
                     isStudent
                       ? 'rounded-xl border border-outline/10 bg-card px-4 py-6 sm:px-8 sm:py-10 shadow-sm'
-                      : 'p-6 rounded-xl border border-outline-variant bg-white hover:border-primary-container hover:shadow-[0px_12px_32px_rgba(0,0,0,0.07)]'
+                      : 'p-6 rounded-xl border border-outline-variant bg-card hover:border-primary-container hover:shadow-[0px_12px_32px_rgba(2,6,23,0.18)]'
                   }`}
                 >
                   <div className="flex justify-between items-start gap-4">
@@ -442,7 +442,7 @@ const TopicConcept = () => {
                               </a>
                             </div>
                           </div>
-                          <div className="rounded-lg overflow-hidden border border-outline/10 bg-white">
+                          <div className="rounded-lg overflow-hidden border border-outline/10 bg-card">
                             <object data={pdfUrl} type="application/pdf" className="w-full h-[380px] sm:h-[520px]">
                               <div className="p-4">
                                 <p className="text-sm text-on-surface mb-2">PDF preview is not supported in this browser.</p>

@@ -150,8 +150,8 @@ const TopicDetailsLayout = ({ isStudent = false }) => {
           ))}
         </div>
 
-        <div className="bg-white rounded-xl border border-outline-variant p-4 sm:p-6 shadow-[0px_8px_24px_rgba(0,0,0,0.08)] mb-4 sm:mb-6 min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-outline break-words">
+        <div className="bg-card rounded-xl border border-outline-variant p-4 sm:p-6 shadow-sm mb-4 sm:mb-6 min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant break-words">
             {subject?.subjectName || 'Subject'} {chapter?.chapterName ? `• ${chapter.chapterName}` : ''}
           </p>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mt-2 min-w-0">
@@ -166,7 +166,7 @@ const TopicDetailsLayout = ({ isStudent = false }) => {
                   type="button"
                   onClick={handleMarkTopicComplete}
                   disabled={isCompletingTopic || isLoadingEligibility || completionEligibility?.eligible === false}
-                  className="bg-surface text-primary-container border border-primary-container/20 px-5 py-3 rounded-lg font-semibold text-sm hover:bg-primary-container/5 disabled:opacity-60 transition-all inline-flex items-center justify-center gap-2"
+                  className="bg-surface text-primary-container border border-primary-container/20 px-5 py-3 rounded-lg font-semibold text-sm hover:bg-primary-container/10 disabled:opacity-60 transition-all inline-flex items-center justify-center gap-2"
                 >
                   <CheckSquare size={18} />
                   {isCompletingTopic ? 'Updating...' : isLoadingEligibility ? 'Checking quiz...' : 'Mark Topic Complete'}
@@ -175,7 +175,7 @@ const TopicDetailsLayout = ({ isStudent = false }) => {
                   <button
                     type="button"
                     onClick={() => navigate(`${basePath}/${nextTab.path}`)}
-                    className="bg-primary-container text-on-primary px-5 py-3 rounded-lg font-semibold text-sm hover:brightness-110 transition-all inline-flex items-center justify-center gap-2"
+                    className="bg-primary-container text-on-primary px-5 py-3 rounded-lg font-semibold text-sm hover:brightness-110 shadow-sm transition-all inline-flex items-center justify-center gap-2"
                   >
                     Continue to {nextTab.name}
                     <ChevronRight size={18} />
@@ -204,7 +204,7 @@ const TopicDetailsLayout = ({ isStudent = false }) => {
           )}
         </div>
 
-        <div className="mt-3 rounded-xl border border-outline/10 bg-white p-3 sm:p-4 shadow-sm min-w-0">
+        <div className="mt-3 rounded-xl border border-outline/10 bg-card p-3 sm:p-4 shadow-sm min-w-0">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 min-w-0">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-primary-container">Support</p>
@@ -235,7 +235,7 @@ const TopicDetailsLayout = ({ isStudent = false }) => {
       <div className={`flex-grow min-h-[280px] sm:min-h-[500px] w-full min-w-0 ${isStudent ? 'px-0 sm:px-4 md:px-6 pb-4' : 'px-2 sm:px-4 pb-4'}`}>
         <Outlet context={{ topic, chapter, subject, isStudent, fetchData: fetchTopic }} />
       </div>
-      <div className="mt-4 sm:mt-5 bg-white rounded-xl border border-outline-variant p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+      <div className="mt-4 sm:mt-5 bg-card rounded-xl border border-outline-variant p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
         <button
           type="button"
           onClick={() => previousTab && navigate(`${basePath}/${previousTab.path}`)}

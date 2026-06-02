@@ -122,13 +122,13 @@ const TopicVideo = () => {
         </div>
       )}
       
-      <div className="bg-white p-4 sm:p-10 rounded-xl border border-outline-variant shadow-[0px_8px_24px_rgba(0,0,0,0.08)] w-full min-w-0 overflow-hidden">
+      <div className="bg-card p-4 sm:p-10 rounded-xl border border-outline-variant shadow-sm w-full min-w-0 overflow-hidden">
         <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-10 min-w-0">
           <div className="min-w-0">
             <h3 className="text-xl sm:text-2xl font-bold text-on-surface break-words">{isStudent ? 'Lecture Hall' : (editingId ? 'Edit Video Lesson' : 'Video Lessons')}</h3>
             <p className="text-on-surface-variant/60 text-sm font-medium mt-1">{isStudent ? 'Access instructional videos and masterclasses.' : (editingId ? 'Modify existing instructional video.' : 'Embed instructional videos and masterclasses.')}</p>
           </div>
-          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-600 border border-rose-500/20 shrink-0">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary-container/10 rounded-xl flex items-center justify-center text-primary-container border border-primary-container/20 shrink-0">
             <Video size={24} />
           </div>
         </div>
@@ -142,7 +142,7 @@ const TopicVideo = () => {
                   value={newVideo.title} 
                   onChange={e => setNewVideo({...newVideo, title: e.target.value})} 
                   placeholder="e.g. Masterclass: Part 1" 
-                  className="w-full bg-white border border-outline/20 px-6 py-4 rounded-xl font-bold text-on-surface focus:border-primary-container outline-none transition-all shadow-sm" 
+                  className="w-full bg-field border border-outline/20 px-6 py-4 rounded-xl font-bold text-on-surface focus:border-primary-container outline-none transition-all shadow-sm" 
                 />
               </div>
               <div className="space-y-2">
@@ -151,14 +151,14 @@ const TopicVideo = () => {
                   value={newVideo.videoUrl} 
                   onChange={e => setNewVideo({...newVideo, videoUrl: e.target.value})} 
                   placeholder="https://youtube.com/watch?v=..." 
-                  className="w-full bg-white border border-outline/20 px-6 py-4 rounded-xl font-medium text-on-surface focus:border-primary-container outline-none transition-all shadow-sm" 
+                  className="w-full bg-field border border-outline/20 px-6 py-4 rounded-xl font-medium text-on-surface focus:border-primary-container outline-none transition-all shadow-sm" 
                 />
               </div>
               <div className="flex gap-4">
                 {editingId && (
                   <button 
                     onClick={handleCancelEdit} 
-                    className="flex-grow bg-white border border-outline/20 text-on-surface px-6 py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface transition-all"
+                    className="flex-grow bg-field border border-outline/20 text-on-surface px-6 py-5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-surface transition-all"
                   >
                     Cancel
                   </button>
@@ -181,7 +181,7 @@ const TopicVideo = () => {
             ) : videos.length > 0 ? (
               <div className="space-y-4">
                 {videos.map(v => (
-                  <div key={v._id} className={`p-4 sm:p-6 bg-white border border-outline/10 rounded-xl flex flex-col gap-4 group hover:border-primary-container transition-all shadow-sm min-w-0`}>
+                  <div key={v._id} className={`p-4 sm:p-6 bg-card border border-outline/10 rounded-xl flex flex-col gap-4 group hover:border-primary-container transition-all shadow-sm min-w-0`}>
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 min-w-0">
                       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                         <div className="w-12 h-12 bg-primary-container/5 rounded-xl flex items-center justify-center text-primary-container">
