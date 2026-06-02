@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  GraduationCap, 
-  Layout, 
-  User, 
-  LogOut, 
-  BookOpen, 
+import {
+  GraduationCap,
+  Layout,
+  User,
+  LogOut,
+  BookOpen,
   ArrowRight,
   CircleUserRound,
   Menu,
@@ -30,6 +30,7 @@ import {
   removeBookmark,
   askQuestion
 } from '../services/engagement';
+import { getDiscussionGroupByGrade } from '../services/discussion';
 import { formatTopicTitleDisplay } from '../utils/formatTopicDisplayText';
 
 const gradeMatchesFilter = (subjectGrade, selectedGrade) => {
@@ -59,9 +60,9 @@ const StudentDashboard = () => {
       try {
         const response = await api.get('/subjects');
         const subjectsList = Array.isArray(response.data) ? response.data : (response.data.data || []);
-        
-        const filtered = subjectsList.filter(s => 
-          gradeMatchesFilter(s.gradeLevel, user.gradeLevel) && 
+
+        const filtered = subjectsList.filter(s =>
+          gradeMatchesFilter(s.gradeLevel, user.gradeLevel) &&
           (!s.stream || s.stream === user.stream)
         );
         setSubjects(filtered);
@@ -121,9 +122,35 @@ const StudentDashboard = () => {
 
   const SIDEBAR_ITEMS = [
     { key: 'dashboard', label: 'Dashboard', icon: <Layout size={20} />, path: '/dashboard' },
-    { key: 'curriculum', label: 'My Subjects', icon: <BookOpen size={20} />, path: '/dashboard' }, // Same as dashboard for student
+    { key: 'curriculum', label: 'My Subjects', icon: <BookOpen size={20} />, path: '/dashboard' },
+    { key: 'discussion', label: 'Group Discussion', icon: <MessageSquarePlus size={20} />, path: '#', isTelegram: true },
     { key: 'profile', label: 'Profile', icon: <User size={20} />, path: '/profile' },
   ];
+
+  const handleTelegramRedirect = async () => {
+    console.log('--- Telegram Redirect Started ---');
+    console.log('User Grade Level:', user?.gradeLevel);
+
+    if (!user?.gradeLevel) {
+      alert('Please set your grade level in your profile first');
+      return;
+    }
+    try {
+      const res = await getDiscussionGroupByGrade(user.gradeLevel);
+      console.log('Discussion Group Response:', res.data);
+
+      if (res.data.success && res.data.data?.telegramLink) {
+        console.log('Opening Telegram Link:', res.data.data.telegramLink);
+        window.open(res.data.data.telegramLink, '_blank');
+      } else {
+        console.warn('No telegram link found for grade:', user.gradeLevel);
+        alert('Telegram group for your grade is not yet configured by admin.');
+      }
+    } catch (err) {
+      console.error('Failed to fetch telegram link:', err);
+      alert('Telegram group for your grade is not yet configured.');
+    }
+  };
 
   const handleMarkRead = async (id) => {
     try {
@@ -186,20 +213,41 @@ const StudentDashboard = () => {
 
         <nav className="flex-grow p-4 space-y-2 overflow-y-auto">
           <div className="h-4"></div>
-          {SIDEBAR_ITEMS.map((item) => (
-            <Link
-              key={item.key}
-              to={item.path}
-              className={`flex items-center gap-3 w-full px-4 py-3 transition-all font-semibold rounded-lg border-l-4 ${
-                item.key === 'dashboard'
-                  ? 'bg-primary-container/10 text-primary-container border-primary-container' 
-                  : 'bg-surface text-on-surface-variant border-transparent hover:bg-surface-container-high'
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
+          {SIDEBAR_ITEMS.map((item) => {
+            const isDiscussion = item.isTelegram;
+            const content = (
+              <>
+                {item.icon}
+                {item.label}
+              </>
+            );
+            const className = `flex items-center gap-3 w-full px-4 py-3 transition-all font-semibold rounded-lg border-l-4 ${item.key === 'dashboard'
+              ? 'bg-primary-container/10 text-primary-container border-primary-container'
+              : 'bg-surface text-on-surface-variant border-transparent hover:bg-surface-container-high'
+              }`;
+
+            if (isDiscussion) {
+              return (
+                <button
+                  key={item.key}
+                  onClick={handleTelegramRedirect}
+                  className={className}
+                >
+                  {content}
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={item.key}
+                to={item.path}
+                className={className}
+              >
+                {content}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-outline/5">
@@ -226,24 +274,45 @@ const StudentDashboard = () => {
                 <X size={24} />
               </button>
             </div>
-            
+
             <nav className="flex-grow p-4 space-y-2 overflow-y-auto">
               <div className="h-4"></div>
-              {SIDEBAR_ITEMS.map((item) => (
-                <Link
-                  key={item.key}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 w-full px-4 py-3 transition-all font-semibold rounded-lg border-l-4 ${
-                    item.key === 'dashboard'
-                      ? 'bg-primary-container/10 text-primary-container border-primary-container' 
-                      : 'bg-surface text-on-surface-variant border-transparent'
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              ))}
+              {SIDEBAR_ITEMS.map((item) => {
+                const isDiscussion = item.isTelegram;
+                const content = (
+                  <>
+                    {item.icon}
+                    {item.label}
+                  </>
+                );
+                const className = `flex items-center gap-3 w-full px-4 py-3 transition-all font-semibold rounded-lg border-l-4 ${item.key === 'dashboard'
+                  ? 'bg-primary-container/10 text-primary-container border-primary-container'
+                  : 'bg-surface text-on-surface-variant border-transparent'
+                  }`;
+
+                if (isDiscussion) {
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => { handleTelegramRedirect(); setIsMobileMenuOpen(false); }}
+                      className={className}
+                    >
+                      {content}
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.key}
+                    to={item.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={className}
+                  >
+                    {content}
+                  </Link>
+                );
+              })}
             </nav>
 
             <div className="p-4 border-t border-outline/5">
@@ -265,17 +334,17 @@ const StudentDashboard = () => {
           </div>
 
           <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 flex-nowrap min-w-0 [&>*]:shrink-0">
-             <div className="hidden md:block text-right max-w-[140px] lg:max-w-none min-w-0">
-               <p className="text-sm font-semibold truncate">{user?.firstName} {user?.lastName}</p>
-               <p className="text-[10px] text-primary-container uppercase font-bold tracking-widest truncate">Grade {user?.gradeLevel} • {user?.stream || 'General'}</p>
-             </div>
-             <Link to="/profile" className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 overflow-hidden hover:opacity-80 transition-opacity shrink-0">
-               {user?.profileImage ? (
-                 <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
-               ) : (
-                 <CircleUserRound size={24} />
-               )}
-             </Link>
+            <div className="hidden md:block text-right max-w-[140px] lg:max-w-none min-w-0">
+              <p className="text-sm font-semibold truncate">{user?.firstName} {user?.lastName}</p>
+              <p className="text-[10px] text-primary-container uppercase font-bold tracking-widest truncate">Grade {user?.gradeLevel} • {user?.stream || 'General'}</p>
+            </div>
+            <Link to="/profile" className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 overflow-hidden hover:opacity-80 transition-opacity shrink-0">
+              {user?.profileImage ? (
+                <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <CircleUserRound size={24} />
+              )}
+            </Link>
           </div>
         </header>
 
@@ -292,7 +361,7 @@ const StudentDashboard = () => {
 
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {[1,2,3].map(i => <div key={i} className="h-48 bg-surface-variant/20 rounded-2xl animate-pulse"></div>)}
+                  {[1, 2, 3].map(i => <div key={i} className="h-48 bg-surface-variant/20 rounded-2xl animate-pulse"></div>)}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -303,9 +372,9 @@ const StudentDashboard = () => {
                       </div>
                       <h3 className="text-lg sm:text-xl font-bold mb-2 break-words">{subject.subjectName}</h3>
                       <p className="text-outline text-sm mb-4 sm:mb-6 flex-grow break-words">Access chapters, topics, and exercises for {subject.subjectName}.</p>
-                      <button 
+                      <button
                         type="button"
-                        onClick={() => handleSelectSubject(subject._id)} 
+                        onClick={() => handleSelectSubject(subject._id)}
                         className="w-full bg-primary-container text-white py-2.5 sm:py-3 rounded-lg font-semibold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2 min-h-11"
                       >
                         Start Learning
@@ -313,7 +382,7 @@ const StudentDashboard = () => {
                       </button>
                     </div>
                   ))}
-                  
+
                   {subjects.length === 0 && (
                     <div className="col-span-full py-20 text-center bg-surface-variant/10 rounded-2xl border border-dashed border-outline/20">
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">

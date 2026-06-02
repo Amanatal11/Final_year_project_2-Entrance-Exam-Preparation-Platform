@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
-import { CircleUserRound, GraduationCap, LogOut, ShieldCheck, BookOpen, ArrowRight, Menu, X, Bell, Bookmark, Search, TriangleAlert, Bot, Send, Flame, CheckSquare, Award } from 'lucide-react';
+import { CircleUserRound, GraduationCap, LogOut, ShieldCheck, BookOpen, ArrowRight, Menu, X, Bell, Bookmark, Search, TriangleAlert, Bot, Send, Flame, CheckSquare, Award, MessageSquarePlus } from 'lucide-react';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import api from './services/api';
 import Login from './pages/Login';
@@ -40,6 +40,7 @@ import {
   getSubjectChapterProgress,
   getSubjectProgress
 } from './services/engagement';
+import { getDiscussionGroupByGrade } from './services/discussion';
 import { formatTopicTitleDisplay } from './utils/formatTopicDisplayText';
 
 /** Match seed/UI variants like "12" vs "Grade 12". */
@@ -97,6 +98,28 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
       setSelectedGrade(grade);
       setShowGradeMenu(false);
       navigate('/dashboard');
+    }
+  };
+
+  const handleTelegramRedirect = async () => {
+    // Redirection is based on the dropdown selected grade as per user request.
+    const gradeToUse = selectedGrade;
+
+    if (!gradeToUse) {
+      alert('Please select a grade level from the dropdown first.');
+      return;
+    }
+
+    try {
+      const res = await getDiscussionGroupByGrade(gradeToUse);
+      if (res.data.success && res.data.data?.telegramLink) {
+        window.open(res.data.data.telegramLink, '_blank');
+      } else {
+        alert(`Telegram group for Grade ${gradeToUse} is not yet configured by admin.`);
+      }
+    } catch (err) {
+      console.error('Failed to fetch telegram link:', err);
+      alert(`Telegram group for Grade ${gradeToUse} is not yet configured.`);
     }
   };
 
@@ -427,32 +450,31 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
             const subjTotal = subjTopics?.totalTopics ?? 0;
             const subjDone = subjTopics?.completedTopics ?? 0;
             return (
-            <button
-              key={subject._id}
-              type="button"
-              onClick={() => {
-                navigate(`/curriculum/subject/${subject._id}/chapters`);
-                if (closeAfterNavigate) setIsMobileMenuOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-colors ${
-                activeSubjectId === subject._id
+              <button
+                key={subject._id}
+                type="button"
+                onClick={() => {
+                  navigate(`/curriculum/subject/${subject._id}/chapters`);
+                  if (closeAfterNavigate) setIsMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-colors ${activeSubjectId === subject._id
                   ? 'bg-primary-container text-on-primary shadow-sm'
                   : 'bg-white text-on-surface hover:bg-primary-container/5'
-              }`}
-            >
-              <span className="flex flex-col gap-0.5 min-w-0">
-                <span className="flex items-center justify-between gap-2">
-                  <span className="line-clamp-1">{subject.subjectName}</span>
-                  <span className={activeSubjectId === subject._id ? 'text-on-primary/80 shrink-0' : 'text-primary-container shrink-0'}>
-                    {subject.progress?.completionPercentage || 0}%
+                  }`}
+              >
+                <span className="flex flex-col gap-0.5 min-w-0">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="line-clamp-1">{subject.subjectName}</span>
+                    <span className={activeSubjectId === subject._id ? 'text-on-primary/80 shrink-0' : 'text-primary-container shrink-0'}>
+                      {subject.progress?.completionPercentage || 0}%
+                    </span>
+                  </span>
+                  <span className={`text-[10px] font-semibold uppercase tracking-wide ${activeSubjectId === subject._id ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>
+                    {subjTotal > 0 ? `${subjDone} / ${subjTotal} topics` : 'Topics not published'}
                   </span>
                 </span>
-                <span className={`text-[10px] font-semibold uppercase tracking-wide ${activeSubjectId === subject._id ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>
-                  {subjTotal > 0 ? `${subjDone} / ${subjTotal} topics` : 'Topics not published'}
-                </span>
-              </span>
-            </button>
-          );
+              </button>
+            );
           })}
           {navSubjects.length === 0 && (
             <p className="text-[11px] text-on-surface-variant">No subjects for this grade.</p>
@@ -475,11 +497,10 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
                   navigate(`/curriculum/chapter/${chapter._id}/topics`);
                   if (closeAfterNavigate) setIsMobileMenuOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                  activeChapterId === chapter._id
-                    ? 'bg-primary-container/10 text-primary-container'
-                    : 'bg-white text-on-surface hover:bg-primary-container/5'
-                }`}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${activeChapterId === chapter._id
+                  ? 'bg-primary-container/10 text-primary-container'
+                  : 'bg-white text-on-surface hover:bg-primary-container/5'
+                  }`}
               >
                 <span className="line-clamp-1">{chapter.chapterName}</span>
               </button>
@@ -506,11 +527,10 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
                   navigate(`/curriculum/topic/${topicItem._id}/objectives`);
                   if (closeAfterNavigate) setIsMobileMenuOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2 ${
-                  activeTopicId === topicItem._id
-                    ? 'bg-primary-container/10 text-primary-container'
-                    : 'bg-white text-on-surface hover:bg-primary-container/5'
-                }`}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between gap-2 ${activeTopicId === topicItem._id
+                  ? 'bg-primary-container/10 text-primary-container'
+                  : 'bg-white text-on-surface hover:bg-primary-container/5'
+                  }`}
               >
                 <span className="line-clamp-2">{formatTopicTitleDisplay(topicItem.topicName)}</span>
                 <ArrowRight size={12} className="shrink-0 text-outline" aria-hidden />
@@ -528,7 +548,7 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
           <div className="flex items-center justify-between">
             <p className="text-xs font-black text-outline uppercase tracking-widest">4. Assessments</p>
           </div>
-          <button 
+          <button
             onClick={() => {
               // Navigate to the first topic's quiz tab as a shortcut
               if (navTopics.length > 0) {
@@ -561,32 +581,31 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
             const subjTotal = subjTopics?.totalTopics ?? 0;
             const subjDone = subjTopics?.completedTopics ?? 0;
             return (
-            <button
-              key={subject._id}
-              type="button"
-              onClick={() => {
-                navigate(`/curriculum/subject/${subject._id}/chapters`);
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full min-h-[48px] text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${
-                activeSubjectId === subject._id
+              <button
+                key={subject._id}
+                type="button"
+                onClick={() => {
+                  navigate(`/curriculum/subject/${subject._id}/chapters`);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full min-h-[48px] text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${activeSubjectId === subject._id
                   ? 'bg-primary-container text-on-primary shadow-sm'
                   : 'bg-white text-on-surface hover:bg-primary-container/5'
-              }`}
-            >
-              <span className="flex flex-col gap-0.5 min-w-0">
-                <span className="flex items-center justify-between gap-3">
-                  <span className="line-clamp-1">{subject.subjectName}</span>
-                  <span className={activeSubjectId === subject._id ? 'text-on-primary/80 shrink-0' : 'text-primary-container shrink-0'}>
-                    {subject.progress?.completionPercentage || 0}%
+                  }`}
+              >
+                <span className="flex flex-col gap-0.5 min-w-0">
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="line-clamp-1">{subject.subjectName}</span>
+                    <span className={activeSubjectId === subject._id ? 'text-on-primary/80 shrink-0' : 'text-primary-container shrink-0'}>
+                      {subject.progress?.completionPercentage || 0}%
+                    </span>
+                  </span>
+                  <span className={`text-[11px] font-semibold ${activeSubjectId === subject._id ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>
+                    {subjTotal > 0 ? `${subjDone} of ${subjTotal} topics complete` : 'Topics not published'}
                   </span>
                 </span>
-                <span className={`text-[11px] font-semibold ${activeSubjectId === subject._id ? 'text-on-primary/70' : 'text-on-surface-variant'}`}>
-                  {subjTotal > 0 ? `${subjDone} of ${subjTotal} topics complete` : 'Topics not published'}
-                </span>
-              </span>
-            </button>
-          );
+              </button>
+            );
           })}
           {navSubjects.length === 0 && (
             <p className="text-xs text-on-surface-variant px-1">No subjects for this grade.</p>
@@ -609,11 +628,10 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
                   navigate(`/curriculum/chapter/${chapter._id}/topics`);
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full min-h-[52px] text-left px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                  activeChapterId === chapter._id
-                    ? 'bg-primary-container/10 text-primary-container'
-                    : 'bg-white text-on-surface hover:bg-primary-container/5'
-                }`}
+                className={`w-full min-h-[52px] text-left px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${activeChapterId === chapter._id
+                  ? 'bg-primary-container/10 text-primary-container'
+                  : 'bg-white text-on-surface hover:bg-primary-container/5'
+                  }`}
               >
                 <span className="line-clamp-1">{chapter.chapterName}</span>
               </button>
@@ -637,11 +655,10 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
                   navigate(`/curriculum/topic/${topicItem._id}/objectives`);
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full min-h-[52px] text-left px-4 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-between gap-3 ${
-                  activeTopicId === topicItem._id
-                    ? 'bg-primary-container/10 text-primary-container'
-                    : 'bg-white text-on-surface hover:bg-primary-container/5'
-                }`}
+                className={`w-full min-h-[52px] text-left px-4 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-between gap-3 ${activeTopicId === topicItem._id
+                  ? 'bg-primary-container/10 text-primary-container'
+                  : 'bg-white text-on-surface hover:bg-primary-container/5'
+                  }`}
               >
                 <span className="line-clamp-2">{formatTopicTitleDisplay(topicItem.topicName)}</span>
                 <ArrowRight size={13} className="shrink-0 text-outline" aria-hidden />
@@ -653,21 +670,21 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
 
       {activeChapterId && (
         <section className="space-y-2 mt-4 pt-4 border-t border-outline/5">
-           <p className="text-xs font-black text-outline uppercase tracking-widest px-1">Assessments</p>
-           <button 
-             onClick={() => {
-               if (navTopics.length > 0) {
-                 navigate(`/curriculum/topic/${navTopics[0]._id}/quiz`);
-                 setIsMobileMenuOpen(false);
-               }
-             }}
-             className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-white border border-outline/10 text-on-surface font-bold text-sm"
-           >
-             <div className="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container">
-               <CheckSquare size={20} />
-             </div>
-             Go to Quizzes
-           </button>
+          <p className="text-xs font-black text-outline uppercase tracking-widest px-1">Assessments</p>
+          <button
+            onClick={() => {
+              if (navTopics.length > 0) {
+                navigate(`/curriculum/topic/${navTopics[0]._id}/quiz`);
+                setIsMobileMenuOpen(false);
+              }
+            }}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-white border border-outline/10 text-on-surface font-bold text-sm"
+          >
+            <div className="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container">
+              <CheckSquare size={20} />
+            </div>
+            Go to Quizzes
+          </button>
         </section>
       )}
     </div>
@@ -682,9 +699,9 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
             <GraduationCap className="text-on-primary" size={20} />
           </div>
           {!isSidebarCollapsed && (
-          <div>
-            <h2 className="text-base font-bold tracking-tight">Entrance Exam Prep</h2>
-          </div>
+            <div>
+              <h2 className="text-base font-bold tracking-tight">Entrance Exam Prep</h2>
+            </div>
           )}
         </div>
         <div className="p-3 border-b border-outline/5">
@@ -734,14 +751,24 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
             <button
               type="button"
               onClick={() => navigate('/curriculum/exams')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-sm font-bold ${
-                location.pathname === '/curriculum/exams'
-                  ? 'bg-primary-container/10 text-primary-container border-primary-container/20'
-                  : 'bg-white text-on-surface-variant border-outline/10 hover:bg-primary-container/5'
-              }`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-sm font-bold ${location.pathname === '/curriculum/exams'
+                ? 'bg-primary-container/10 text-primary-container border-primary-container/20'
+                : 'bg-white text-on-surface-variant border-outline/10 hover:bg-primary-container/5'
+                }`}
             >
               <Award size={16} className="text-primary-container shrink-0" />
               Entrance Exams
+            </button>
+          )}
+
+          {(userRole === 'student' || userRole === 'admin') && (
+            <button
+              type="button"
+              onClick={handleTelegramRedirect}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-white text-on-surface-variant border-outline/10 hover:bg-primary-container/5 transition-all text-sm font-bold"
+            >
+              <MessageSquarePlus size={16} className="text-primary-container shrink-0" />
+              Group Discussion
             </button>
           )}
 
@@ -800,13 +827,13 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
           <div className="absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
           <div className="absolute left-0 top-0 bottom-0 w-[min(92vw,380px)] bg-background shadow-2xl flex flex-col">
             <div className="h-16 flex items-center justify-between border-b border-outline/5 px-4 shrink-0">
-               <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 bg-primary-container rounded-lg flex items-center justify-center">
-                   <GraduationCap className="text-on-primary" size={20} />
-                 </div>
-                 <span className="text-sm font-bold">Entrance Exam Prep</span>
-               </div>
-               <button onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface-variant p-2 rounded-lg hover:bg-surface"><X size={22} /></button>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary-container rounded-lg flex items-center justify-center">
+                  <GraduationCap className="text-on-primary" size={20} />
+                </div>
+                <span className="text-sm font-bold">Entrance Exam Prep</span>
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="text-on-surface-variant p-2 rounded-lg hover:bg-surface"><X size={22} /></button>
             </div>
             <nav className="flex-grow p-3 space-y-4 overflow-y-auto overscroll-contain pb-6">
               <div className="space-y-2">
@@ -851,6 +878,19 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
                   Entrance Exams
                 </button>
               )}
+              {(userRole === 'student' || userRole === 'admin') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleTelegramRedirect();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-3 font-semibold rounded-xl bg-white border border-outline/10 text-on-surface-variant"
+                >
+                  <MessageSquarePlus size={18} className="text-primary-container" />
+                  Group Discussion
+                </button>
+              )}
               {userRole === 'student' && renderMobileCurriculumNav()}
               {ACTION_ITEMS.map((item) => (
                 <button key={item.key} onClick={() => { navigate(item.path); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 w-full px-4 py-3 font-semibold rounded-xl bg-white border border-outline/10">{item.icon} {item.label}</button>
@@ -865,208 +905,207 @@ const StudentLayout = ({ children, selectedGrade, setSelectedGrade }) => {
 
       <div className="flex-grow flex flex-col min-h-0 min-w-0">
         <header className="min-h-[4rem] sm:h-20 bg-header-surface/95 backdrop-blur border-b border-outline/10 px-2.5 sm:px-4 lg:px-gutter grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 sticky top-0 z-50 shrink-0 min-w-0 py-2 sm:py-0 overflow-visible">
-           <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 min-h-0 overflow-visible">
-             <button type="button" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-on-surface-variant p-1.5 shrink-0 rounded-lg hover:bg-surface" aria-label="Open menu">
-               <Menu size={22} />
-             </button>
-             {userRole === 'student' && (
-               <div ref={gradeMenuRef} className="relative min-w-0 max-w-full sm:max-w-[11rem] md:max-w-[13rem] lg:max-w-[15rem] xl:max-w-[18rem] isolate z-[100]">
-                 <button
-                   type="button"
-                   onClick={() => setShowGradeMenu((value) => !value)}
-                   className="w-full min-w-0 bg-surface border border-outline/10 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm hover:border-primary-container/30 hover:bg-card transition-all flex items-center justify-between gap-2"
-                   title="Choose grade"
-                   aria-expanded={showGradeMenu}
-                   aria-haspopup="listbox"
-                 >
-                   <span className="text-left min-w-0 truncate">
-                     <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-on-surface-variant leading-tight">Current Grade</span>
-                     <span className="block text-xs sm:text-sm font-black text-on-surface leading-tight truncate mt-0 sm:mt-px">
-                       <span className="sm:hidden">G{selectedGrade}</span>
-                       <span className="hidden sm:inline">Grade {selectedGrade}</span>
-                     </span>
-                   </span>
-                   <span className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg bg-primary-container/10 text-primary-container flex items-center justify-center text-[10px] font-black">▾</span>
-                 </button>
-                 {showGradeMenu && (
-                   <div
-                     role="listbox"
-                     aria-label="Select grade level"
-                     className="absolute left-0 top-full mt-2 z-[120] w-56 max-w-[min(18rem,calc(100vw-2rem))] bg-white border border-outline-variant rounded-2xl shadow-[0px_12px_32px_rgba(0,0,0,0.12)] p-2"
-                   >
-                     <div className="px-3 py-2 border-b border-outline/10 mb-1">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-primary-container">Select Grade Level</p>
-                       <p className="text-xs text-on-surface-variant mt-1">Switch your dashboard and learning map.</p>
-                     </div>
-                     {GRADE_ITEMS.map((item) => {
-                       const isSelected = String(item.key) === String(selectedGrade);
-                       return (
-                         <button
-                           key={item.key}
-                           type="button"
-                           role="option"
-                           aria-selected={isSelected}
-                           onClick={() => handleGradeClick(item.key)}
-                           className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between gap-3 ${
-                             isSelected
-                               ? 'bg-primary-container text-on-primary shadow-sm'
-                               : 'text-on-surface hover:bg-primary-container/5'
-                           }`}
-                         >
-                           <span>
-                             <span className="block text-sm font-black">{item.label}</span>
-                             {isSelected && (
-                               <span className="text-[10px] font-bold uppercase tracking-widest text-on-primary/80">
-                                 Active grade
-                               </span>
-                             )}
-                           </span>
-                           <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-black ${isSelected ? 'border-on-primary/50 bg-white/20' : 'border-outline/20'}`}>
-                             {isSelected ? '✓' : ''}
-                           </span>
-                         </button>
-                       );
-                     })}
-                   </div>
-                 )}
-               </div>
-             )}
-           </div>
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 min-h-0 overflow-visible">
+            <button type="button" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-on-surface-variant p-1.5 shrink-0 rounded-lg hover:bg-surface" aria-label="Open menu">
+              <Menu size={22} />
+            </button>
+            {userRole === 'student' && (
+              <div ref={gradeMenuRef} className="relative min-w-0 max-w-full sm:max-w-[11rem] md:max-w-[13rem] lg:max-w-[15rem] xl:max-w-[18rem] isolate z-[100]">
+                <button
+                  type="button"
+                  onClick={() => setShowGradeMenu((value) => !value)}
+                  className="w-full min-w-0 bg-surface border border-outline/10 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm hover:border-primary-container/30 hover:bg-card transition-all flex items-center justify-between gap-2"
+                  title="Choose grade"
+                  aria-expanded={showGradeMenu}
+                  aria-haspopup="listbox"
+                >
+                  <span className="text-left min-w-0 truncate">
+                    <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-on-surface-variant leading-tight">Current Grade</span>
+                    <span className="block text-xs sm:text-sm font-black text-on-surface leading-tight truncate mt-0 sm:mt-px">
+                      <span className="sm:hidden">G{selectedGrade}</span>
+                      <span className="hidden sm:inline">Grade {selectedGrade}</span>
+                    </span>
+                  </span>
+                  <span className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg bg-primary-container/10 text-primary-container flex items-center justify-center text-[10px] font-black">▾</span>
+                </button>
+                {showGradeMenu && (
+                  <div
+                    role="listbox"
+                    aria-label="Select grade level"
+                    className="absolute left-0 top-full mt-2 z-[120] w-56 max-w-[min(18rem,calc(100vw-2rem))] bg-white border border-outline-variant rounded-2xl shadow-[0px_12px_32px_rgba(0,0,0,0.12)] p-2"
+                  >
+                    <div className="px-3 py-2 border-b border-outline/10 mb-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-primary-container">Select Grade Level</p>
+                      <p className="text-xs text-on-surface-variant mt-1">Switch your dashboard and learning map.</p>
+                    </div>
+                    {GRADE_ITEMS.map((item) => {
+                      const isSelected = String(item.key) === String(selectedGrade);
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => handleGradeClick(item.key)}
+                          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between gap-3 ${isSelected
+                            ? 'bg-primary-container text-on-primary shadow-sm'
+                            : 'text-on-surface hover:bg-primary-container/5'
+                            }`}
+                        >
+                          <span>
+                            <span className="block text-sm font-black">{item.label}</span>
+                            {isSelected && (
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-on-primary/80">
+                                Active grade
+                              </span>
+                            )}
+                          </span>
+                          <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-black ${isSelected ? 'border-on-primary/50 bg-white/20' : 'border-outline/20'}`}>
+                            {isSelected ? '✓' : ''}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 flex-nowrap min-w-0 [&>*]:shrink-0">
-             <div className="relative">
-               <button
-                 type="button"
-                 onClick={() => {
-                   setShowBookmarks(false);
-                   setShowNotifications((v) => !v);
-                 }}
-                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 relative"
-                 title="Notifications"
-               >
-                 <Bell size={18} />
-                 {notifications.length > 0 && (
-                   <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-white text-[10px] font-bold flex items-center justify-center">
-                     {notifications.length > 9 ? '9+' : notifications.length}
-                   </span>
-                 )}
-               </button>
-               {showNotifications && (
-                 <>
-                   <button
-                     type="button"
-                     className="fixed inset-0 z-[190] bg-on-surface/25 sm:bg-on-surface/10"
-                     aria-label="Close notifications"
-                     onClick={() => setShowNotifications(false)}
-                   />
-                   <div className="fixed left-3 right-3 top-[4.75rem] sm:top-20 sm:left-auto sm:right-4 sm:w-[min(22rem,calc(100vw-2rem))] min-w-0 max-h-[min(22.5rem,min(70vh,calc(100vh-6rem)))] overflow-y-auto overflow-x-hidden rounded-xl border border-outline/10 bg-card shadow-2xl z-[200]">
-                     <div className="px-4 py-3 border-b border-outline/10 flex items-center justify-between gap-2 min-w-0">
-                       <p className="text-sm font-semibold truncate">Notifications</p>
-                       <span className="text-xs text-on-surface-variant shrink-0">{notifications.length} unread</span>
-                     </div>
-                     <div className="p-2 space-y-2 min-w-0">
-                       {notifications.map((n) => (
-                         <div key={n._id} className="p-3 rounded-lg border border-outline/10 bg-surface min-w-0">
-                           <p className="text-sm font-semibold break-words">{n.title}</p>
-                           <p className="text-xs text-on-surface-variant mt-1 break-words">{n.message}</p>
-                           <button
-                             type="button"
-                             onClick={() => handleMarkReadFromNav(n._id)}
-                             className="text-xs text-primary-container font-semibold mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-container/40 rounded"
-                           >
-                             Mark as read
-                           </button>
-                         </div>
-                       ))}
-                       {notifications.length === 0 && (
-                         <p className="text-sm text-on-surface-variant p-3">No unread notifications.</p>
-                       )}
-                     </div>
-                   </div>
-                 </>
-               )}
-             </div>
-             <div className="relative">
-               <button
-                 type="button"
-                 onClick={() => {
-                   setShowNotifications(false);
-                   setShowBookmarks((v) => !v);
-                 }}
-                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 relative"
-                 title={userRole === 'student' ? 'My bookmarks' : 'Bookmarks'}
-               >
-                 <Bookmark size={18} />
-                 {bookmarks.length > 0 && (
-                   <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary-container text-white text-[10px] font-bold flex items-center justify-center">
-                     {bookmarks.length > 9 ? '9+' : bookmarks.length}
-                   </span>
-                 )}
-               </button>
-               {showBookmarks && (
-                 <>
-                   <button
-                     type="button"
-                     className="fixed inset-0 z-[190] bg-on-surface/25 sm:bg-on-surface/10"
-                     aria-label="Close bookmarks"
-                     onClick={() => setShowBookmarks(false)}
-                   />
-                   <div className="fixed left-3 right-3 top-[4.75rem] sm:top-20 sm:left-auto sm:right-4 sm:w-[min(22rem,calc(100vw-2rem))] min-w-0 max-h-[min(22.5rem,min(70vh,calc(100vh-6rem)))] overflow-y-auto overflow-x-hidden rounded-xl border border-outline/10 bg-card shadow-2xl z-[200]">
-                     <div className="px-4 py-3 border-b border-outline/10 flex items-center justify-between gap-2 min-w-0">
-                       <p className="text-sm font-semibold truncate">My Bookmarks</p>
-                       <span className="text-xs text-on-surface-variant shrink-0">{bookmarks.length} saved</span>
-                     </div>
-                     <div className="p-2 space-y-2 min-w-0">
-                       {userRole !== 'student' && (
-                         <p className="text-sm text-on-surface-variant p-3">Bookmarks are available for student accounts.</p>
-                       )}
-                       {userRole === 'student' && bookmarks.map((bookmark) => (
-                         <div key={bookmark._id} className="p-3 rounded-lg border border-outline/10 bg-surface min-w-0">
-                           <button
-                             type="button"
-                             onClick={() => handleOpenBookmark(bookmark)}
-                             disabled={!bookmark.targetPath}
-                             className="w-full min-w-0 text-left disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-container/40 rounded-lg"
-                           >
-                             <p className="text-[10px] font-black uppercase tracking-widest text-primary-container break-words">
-                               {String(bookmark.resourceType ?? 'resource').replaceAll('-', ' ')}
-                             </p>
-                             <p className="text-sm font-semibold text-on-surface line-clamp-2 mt-1 break-words">
-                               {bookmark.title || bookmark.resourceId}
-                             </p>
-                             {bookmark.note && (
-                               <p className="text-[11px] text-on-surface-variant mt-2 line-clamp-2 break-words">
-                                 Note: {bookmark.note}
-                               </p>
-                             )}
-                           </button>
-                           <div className="flex justify-end mt-2">
-                             <button
-                               type="button"
-                               onClick={() => handleRemoveBookmarkFromNav(bookmark._id)}
-                               className="text-xs text-error font-semibold shrink-0"
-                             >
-                               Remove
-                             </button>
-                           </div>
-                         </div>
-                       ))}
-                       {userRole === 'student' && bookmarks.length === 0 && (
-                         <p className="text-sm text-on-surface-variant p-3">No bookmarks yet.</p>
-                       )}
-                     </div>
-                   </div>
-                 </>
-               )}
-             </div>
-             <ThemeToggle />
-             <div className="text-right hidden md:block">
-               <p className="text-sm font-semibold">{user?.firstName} {user?.lastName}</p>
-               <p className="text-[10px] text-primary-container uppercase font-bold tracking-widest">{user?.stream || 'Student'}</p>
-             </div>
-             <Link to="/profile" className="relative z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 overflow-hidden hover:opacity-80 transition-opacity shrink-0" title="Profile">
-               {user?.profileImage ? <img src={user.profileImage} alt="" className="w-full h-full object-cover" /> : <CircleUserRound size={20} />}
-             </Link>
-           </div>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBookmarks(false);
+                  setShowNotifications((v) => !v);
+                }}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 relative"
+                title="Notifications"
+              >
+                <Bell size={18} />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-white text-[10px] font-bold flex items-center justify-center">
+                    {notifications.length > 9 ? '9+' : notifications.length}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-[190] bg-on-surface/25 sm:bg-on-surface/10"
+                    aria-label="Close notifications"
+                    onClick={() => setShowNotifications(false)}
+                  />
+                  <div className="fixed left-3 right-3 top-[4.75rem] sm:top-20 sm:left-auto sm:right-4 sm:w-[min(22rem,calc(100vw-2rem))] min-w-0 max-h-[min(22.5rem,min(70vh,calc(100vh-6rem)))] overflow-y-auto overflow-x-hidden rounded-xl border border-outline/10 bg-card shadow-2xl z-[200]">
+                    <div className="px-4 py-3 border-b border-outline/10 flex items-center justify-between gap-2 min-w-0">
+                      <p className="text-sm font-semibold truncate">Notifications</p>
+                      <span className="text-xs text-on-surface-variant shrink-0">{notifications.length} unread</span>
+                    </div>
+                    <div className="p-2 space-y-2 min-w-0">
+                      {notifications.map((n) => (
+                        <div key={n._id} className="p-3 rounded-lg border border-outline/10 bg-surface min-w-0">
+                          <p className="text-sm font-semibold break-words">{n.title}</p>
+                          <p className="text-xs text-on-surface-variant mt-1 break-words">{n.message}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleMarkReadFromNav(n._id)}
+                            className="text-xs text-primary-container font-semibold mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-container/40 rounded"
+                          >
+                            Mark as read
+                          </button>
+                        </div>
+                      ))}
+                      {notifications.length === 0 && (
+                        <p className="text-sm text-on-surface-variant p-3">No unread notifications.</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNotifications(false);
+                  setShowBookmarks((v) => !v);
+                }}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 relative"
+                title={userRole === 'student' ? 'My bookmarks' : 'Bookmarks'}
+              >
+                <Bookmark size={18} />
+                {bookmarks.length > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary-container text-white text-[10px] font-bold flex items-center justify-center">
+                    {bookmarks.length > 9 ? '9+' : bookmarks.length}
+                  </span>
+                )}
+              </button>
+              {showBookmarks && (
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-[190] bg-on-surface/25 sm:bg-on-surface/10"
+                    aria-label="Close bookmarks"
+                    onClick={() => setShowBookmarks(false)}
+                  />
+                  <div className="fixed left-3 right-3 top-[4.75rem] sm:top-20 sm:left-auto sm:right-4 sm:w-[min(22rem,calc(100vw-2rem))] min-w-0 max-h-[min(22.5rem,min(70vh,calc(100vh-6rem)))] overflow-y-auto overflow-x-hidden rounded-xl border border-outline/10 bg-card shadow-2xl z-[200]">
+                    <div className="px-4 py-3 border-b border-outline/10 flex items-center justify-between gap-2 min-w-0">
+                      <p className="text-sm font-semibold truncate">My Bookmarks</p>
+                      <span className="text-xs text-on-surface-variant shrink-0">{bookmarks.length} saved</span>
+                    </div>
+                    <div className="p-2 space-y-2 min-w-0">
+                      {userRole !== 'student' && (
+                        <p className="text-sm text-on-surface-variant p-3">Bookmarks are available for student accounts.</p>
+                      )}
+                      {userRole === 'student' && bookmarks.map((bookmark) => (
+                        <div key={bookmark._id} className="p-3 rounded-lg border border-outline/10 bg-surface min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBookmark(bookmark)}
+                            disabled={!bookmark.targetPath}
+                            className="w-full min-w-0 text-left disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-container/40 rounded-lg"
+                          >
+                            <p className="text-[10px] font-black uppercase tracking-widest text-primary-container break-words">
+                              {String(bookmark.resourceType ?? 'resource').replaceAll('-', ' ')}
+                            </p>
+                            <p className="text-sm font-semibold text-on-surface line-clamp-2 mt-1 break-words">
+                              {bookmark.title || bookmark.resourceId}
+                            </p>
+                            {bookmark.note && (
+                              <p className="text-[11px] text-on-surface-variant mt-2 line-clamp-2 break-words">
+                                Note: {bookmark.note}
+                              </p>
+                            )}
+                          </button>
+                          <div className="flex justify-end mt-2">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBookmarkFromNav(bookmark._id)}
+                              className="text-xs text-error font-semibold shrink-0"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {userRole === 'student' && bookmarks.length === 0 && (
+                        <p className="text-sm text-on-surface-variant p-3">No bookmarks yet.</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <ThemeToggle />
+            <div className="text-right hidden md:block">
+              <p className="text-sm font-semibold">{user?.firstName} {user?.lastName}</p>
+              <p className="text-[10px] text-primary-container uppercase font-bold tracking-widest">{user?.stream || 'Student'}</p>
+            </div>
+            <Link to="/profile" className="relative z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container border border-primary-container/20 overflow-hidden hover:opacity-80 transition-opacity shrink-0" title="Profile">
+              {user?.profileImage ? <img src={user.profileImage} alt="" className="w-full h-full object-cover" /> : <CircleUserRound size={20} />}
+            </Link>
+          </div>
         </header>
         <main className="flex-grow min-h-0 px-3 py-4 sm:p-gutter overflow-x-hidden overflow-y-auto bg-background">
           <div className="max-w-[1440px] mx-auto">
@@ -1178,10 +1217,10 @@ const Dashboard = ({ selectedGrade }) => {
     const normalizeProgressPayload = (list) =>
       Array.isArray(list)
         ? list.reduce((acc, item) => {
-            const subjectId = item.subjectId?._id || item.subjectId;
-            if (subjectId) acc[String(subjectId)] = item;
-            return acc;
-          }, {})
+          const subjectId = item.subjectId?._id || item.subjectId;
+          if (subjectId) acc[String(subjectId)] = item;
+          return acc;
+        }, {})
         : {};
 
     const fetchSubjects = async () => {
@@ -1388,7 +1427,7 @@ const Dashboard = ({ selectedGrade }) => {
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {[1,2,3].map(i => <div key={i} className="h-44 bg-surface rounded-xl animate-pulse"></div>)}
+            {[1, 2, 3].map(i => <div key={i} className="h-44 bg-surface rounded-xl animate-pulse"></div>)}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -1398,46 +1437,46 @@ const Dashboard = ({ selectedGrade }) => {
               const tDone = progress.completedTopics ?? 0;
               const tTotal = progress.totalTopics ?? 0;
               return (
-              <div key={subject._id} className="bg-white rounded-xl border border-outline/10 p-4 sm:p-6 shadow-sm hover:shadow-[0px_8px_24px_rgba(0,0,0,0.08)] transition-all flex flex-col h-full">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-container/10 rounded-lg flex items-center justify-center text-primary-container shrink-0">
-                    <BookOpen size={20} />
+                <div key={subject._id} className="bg-white rounded-xl border border-outline/10 p-4 sm:p-6 shadow-sm hover:shadow-[0px_8px_24px_rgba(0,0,0,0.08)] transition-all flex flex-col h-full">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-container/10 rounded-lg flex items-center justify-center text-primary-container shrink-0">
+                      <BookOpen size={20} />
+                    </div>
                   </div>
+                  <h4 className="text-lg sm:text-xl font-bold mt-4">{subject.subjectName}</h4>
+                  <div className="mt-4 rounded-lg bg-surface border border-outline/10 p-4 flex-1">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Topic completion</span>
+                      <span className="text-sm font-black text-primary-container">{percentage}%</span>
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant leading-snug mb-3">
+                      {tTotal > 0 ? (
+                        <>
+                          Lesson topics marked complete in this subject:{' '}
+                          <span className="font-semibold text-on-surface">
+                            {tDone} of {tTotal}
+                          </span>
+                          .
+                        </>
+                      ) : (
+                        <>No lesson topics are published under this subject yet.</>
+                      )}
+                    </p>
+                    <div className="h-2 rounded-full bg-white border border-outline/10 overflow-hidden">
+                      <div
+                        className="h-full bg-primary-container transition-all"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/curriculum/subject/${subject._id}/chapters`)}
+                    className="mt-6 w-full bg-error text-white py-3 px-5 rounded-lg font-semibold text-sm hover:brightness-110 active:opacity-80 transition-all flex items-center justify-center gap-2"
+                  >
+                    Open Subject
+                    <ArrowRight size={18} />
+                  </button>
                 </div>
-                <h4 className="text-lg sm:text-xl font-bold mt-4">{subject.subjectName}</h4>
-                <div className="mt-4 rounded-lg bg-surface border border-outline/10 p-4 flex-1">
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Topic completion</span>
-                    <span className="text-sm font-black text-primary-container">{percentage}%</span>
-                  </div>
-                  <p className="text-[11px] text-on-surface-variant leading-snug mb-3">
-                    {tTotal > 0 ? (
-                      <>
-                        Lesson topics marked complete in this subject:{' '}
-                        <span className="font-semibold text-on-surface">
-                          {tDone} of {tTotal}
-                        </span>
-                        .
-                      </>
-                    ) : (
-                      <>No lesson topics are published under this subject yet.</>
-                    )}
-                  </p>
-                  <div className="h-2 rounded-full bg-white border border-outline/10 overflow-hidden">
-                    <div
-                      className="h-full bg-primary-container transition-all"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate(`/curriculum/subject/${subject._id}/chapters`)}
-                  className="mt-6 w-full bg-error text-white py-3 px-5 rounded-lg font-semibold text-sm hover:brightness-110 active:opacity-80 transition-all flex items-center justify-center gap-2"
-                >
-                  Open Subject
-                  <ArrowRight size={18} />
-                </button>
-              </div>
               );
             })}
             {subjects.length === 0 && (
@@ -1468,25 +1507,25 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          
+
           {/* Protected Routes */}
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <StudentLayout selectedGrade={selectedGrade} setSelectedGrade={setSelectedGrade}>
                   <Dashboard selectedGrade={selectedGrade} />
                 </StudentLayout>
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
-            } 
+            }
           />
           <Route
             path="/admin"
@@ -1521,7 +1560,7 @@ const App = () => {
             <Route path="exams" element={<ExamQuestionBank isStudent={false} />} />
           </Route>
           {/* Curriculum Routes */}
-          <Route 
+          <Route
             path="/curriculum/subject/:subjectId/chapters"
             element={
               <ProtectedRoute allowedRoles={['student', 'admin']}>
