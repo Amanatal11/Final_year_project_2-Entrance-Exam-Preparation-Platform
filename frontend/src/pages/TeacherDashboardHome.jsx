@@ -177,7 +177,7 @@ const TeacherDashboardHome = () => {
             <div className="bg-white rounded-2xl border border-outline/10 p-6">
               <div className="flex items-center gap-2 mb-4">
                 <TriangleAlert size={18} className="text-primary-container" />
-                <h4 className="font-bold">Student Reported Issues (FR-24)</h4>
+                <h4 className="font-bold">Student Reported Issues</h4>
               </div>
               <p className="text-xs text-on-surface-variant mb-4">
                 Showing reports only for subjects assigned to you.
@@ -227,7 +227,7 @@ const TeacherDashboardHome = () => {
             <div className="bg-white rounded-2xl border border-outline/10 p-6">
               <div className="flex items-center gap-2 mb-4">
                 <MessageCircle size={18} className="text-primary-container" />
-                <h4 className="font-bold">Student Questions (FR-16)</h4>
+                <h4 className="font-bold">Student Questions</h4>
               </div>
               <div className="space-y-3 max-h-80 overflow-auto pr-1">
                 {questions.slice(0, 20).map((q) => (
