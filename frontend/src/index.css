@@ -1,26 +1,26 @@
-/* Roboto: primary UI — Roboto Mono: code/math blocks inside the app */
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400;1,500;1,700&display=swap');
+/* Reddit-like typography: IBM Plex Sans UI + IBM Plex Mono for code */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 @import "tailwindcss";
 
 /* Manual toggle: `.dark` on `html`; `dark:*` utilities */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --color-primary-container: #EB7100;
+  --color-primary-container: #2563eb;
   --color-on-primary: #FFFFFF;
-  --color-surface: #FFF7ED;
+  --color-surface: #eff6ff;
   --color-on-surface: #1A1C1C;
-  --color-surface-variant: #FED7AA;
+  --color-surface-variant: #dbeafe;
   --color-on-surface-variant: #424654;
-  --color-outline: #9A6A45;
-  --color-outline-variant: #FED7AA;
+  --color-outline: #4b5563;
+  --color-outline-variant: #cbd5e1;
   --color-error: #BA1A1A;
   --color-error-container: #FFDAD6;
   --color-on-error-container: #93000A;
-  --color-background: #FFFAF5;
+  --color-background: #f8fafc;
 
   /* Surfaces lifted above background (cards, drawers, dropdowns using `bg-white`) */
   --color-card: #ffffff;
@@ -38,7 +38,7 @@
 :root {
   /* Matches @theme --font-* so Tailwind utilities and globals stay aligned */
   font-family:
-    'Roboto',
+    'IBM Plex Sans',
     ui-sans-serif,
     system-ui,
     sans-serif,
@@ -80,7 +80,7 @@ kbd,
 pre,
 samp {
   font-family:
-    'Roboto Mono',
+    'IBM Plex Mono',
     ui-monospace,
     SFMono-Regular,
     Menlo,
@@ -149,27 +149,27 @@ body [class*="shadow-["] {
   .dark {
     color-scheme: dark;
 
-    --color-primary-container: #ff9f45;
-    --color-on-primary: #321300;
+    --color-primary-container: #60a5fa;
+    --color-on-primary: #06224a;
 
-    --color-surface: #221f1c;
-    --color-on-surface: #f4ebe4;
-    --color-surface-variant: #39332e;
-    --color-on-surface-variant: #d0c8c0;
+    --color-surface: #111827;
+    --color-on-surface: #e5e7eb;
+    --color-surface-variant: #1f2937;
+    --color-on-surface-variant: #94a3b8;
 
-    --color-outline: #b09a87;
-    --color-outline-variant: #554a43;
+    --color-outline: #94a3b8;
+    --color-outline-variant: #334155;
 
     --color-error: #ffb4ab;
     --color-error-container: #601410;
     --color-on-error-container: #ffdad6;
 
-    --color-background: #151311;
+    --color-background: #020617;
 
-    --color-card: #2a2724;
-    --color-field: #2e2a26;
-    --color-header-surface: #1e1b18;
-    --color-white: #2c2825;
+    --color-card: #111827;
+    --color-field: #1e293b;
+    --color-header-surface: #0f172a;
+    --color-white: #1f2937;
     --color-on-error: #ffffff;
   }
 }
