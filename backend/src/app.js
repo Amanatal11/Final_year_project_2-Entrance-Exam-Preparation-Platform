@@ -51,6 +51,20 @@ app.use((req, res, next) => {
   }
   return helmetMiddleware(req, res, next);
 });
+// Allow permissive CORS for discussion endpoints so deployed frontends (which may
+// not be listed in FRONTEND_URL or use preview domains) can reach these routes.
+// This uses a reflective origin check for /api/discussions only.
+app.use(
+  '/api/discussions',
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser tools (no Origin) and reflect any browser origin.
+      if (!origin) return callback(null, true);
+      return callback(null, true);
+    },
+    credentials: true,
+  })
+);
 app.use(cors({
   origin: (origin, callback) => {
     // Allow non-browser and same-origin requests with no Origin header.
