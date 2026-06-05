@@ -21,6 +21,8 @@ const ManageSubjects = () => {
   const [assignData, setAssignData] = useState({ email: '', firstName: '', lastName: '', stream: '' });
   const [assignLoading, setAssignLoading] = useState(false);
   const [assignSuccess, setAssignSuccess] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
 
   useEffect(() => {
     fetchSubjects();
@@ -39,26 +41,43 @@ const ManageSubjects = () => {
   };
 
   const handleAssignTeacher = async (subjectId) => {
-    const normalizedEmail = assignData.email.trim().toLowerCase();
-    if (!normalizedEmail) return;
     setAssignLoading(true);
     try {
-      const response = await api.post(`/subjects/${subjectId}/invite-assign-teacher`, {
-        ...assignData,
-        email: normalizedEmail,
-      });
-      if (response.data?.subject) {
-        setSubjects((prev) => prev.map((subject) => (
-          subject._id === subjectId ? response.data.subject : subject
-        )));
+      // If an existing teacher is selected, use the assign-by-id endpoint
+      if (selectedTeacherId) {
+        const response = await api.put(`/subjects/${subjectId}/assign-teacher/${selectedTeacherId}`);
+        if (response.data) {
+          setSubjects((prev) => prev.map((subject) => (
+            subject._id === subjectId ? response.data : subject
+          )));
+        }
+      } else {
+        // Fallback: invite and assign by email (existing behavior)
+        const normalizedEmail = assignData.email.trim().toLowerCase();
+        if (!normalizedEmail) {
+          alert('Please provide an email or select an existing teacher.');
+          setAssignLoading(false);
+          return;
+        }
+        const response = await api.post(`/subjects/${subjectId}/invite-assign-teacher`, {
+          ...assignData,
+          email: normalizedEmail,
+        });
+        if (response.data?.subject) {
+          setSubjects((prev) => prev.map((subject) => (
+            subject._id === subjectId ? response.data.subject : subject
+          )));
+        }
       }
+
       setAssignSuccess(true);
       setTimeout(() => {
         setAssigningId(null);
         setAssignSuccess(false);
         setAssignData({ email: '', firstName: '', lastName: '', stream: '' });
+        setSelectedTeacherId('');
         fetchSubjects();
-      }, 2000);
+      }, 1500);
     } catch (err) {
       alert(err.response?.data?.message || 'Assignment failed');
     } finally {
@@ -293,15 +312,23 @@ const ManageSubjects = () => {
                         </div>
                       </div>
 
-                      <button 
-                        onClick={() => { 
-                          setAssigningId(subj._id); 
+                        <button 
+                        onClick={async () => { 
+                          setAssigningId(subj._id);
                           setAssignData({ 
                             email: subj.teacher?.email || '', 
                             firstName: subj.teacher?.firstName || '', 
                             lastName: subj.teacher?.lastName || '', 
                             stream: subj.stream 
                           }); 
+                          // Load registered teachers for selection (lightweight list)
+                          try {
+                            const res = await api.get('/admin/users?role=teacher&limit=100');
+                            setTeachers(res.data?.data || []);
+                          } catch (err) {
+                            // Non-blocking; selection will be empty and email fallback remains
+                            setTeachers([]);
+                          }
                         }}
                         className="w-full py-3 rounded-lg bg-primary-container text-on-primary text-xs font-bold uppercase tracking-widest hover:brightness-110 active:scale-[0.98] shadow-lg shadow-primary-container/20 transition-all flex items-center justify-center gap-2"
                       >
@@ -322,20 +349,35 @@ const ManageSubjects = () => {
                           <button onClick={() => setAssigningId(null)} className="text-on-primary opacity-40 hover:opacity-100 transition-all"><X size={24} /></button>
                         </div>
                         <div className="space-y-4 flex-grow">
-                          {!assignSuccess ? (
-                            <>
-                              <div>
-                                <label className="block text-[10px] font-bold text-on-primary opacity-60 uppercase tracking-widest mb-2 ml-1">Email Address</label>
-                                <div className="relative">
-                                  <input 
-                                    placeholder="teacher@academy.edu"
-                                    className="w-full bg-white/10 border border-white/10 rounded-lg px-4 py-3 pl-11 text-sm text-on-primary outline-none focus:border-primary-container transition-all"
-                                    value={assignData.email}
-                                    onChange={e => setAssignData({...assignData, email: e.target.value})}
-                                  />
-                                  <Plus size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                            {!assignSuccess ? (
+                              <>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-on-primary opacity-60 uppercase tracking-widest mb-2 ml-1">Select Registered Teacher (optional)</label>
+                                  <div className="relative">
+                                    <select
+                                      value={selectedTeacherId}
+                                      onChange={(e) => setSelectedTeacherId(e.target.value)}
+                                      className="w-full bg-white/10 border border-white/10 rounded-lg px-4 py-3 text-sm text-on-primary outline-none focus:border-primary-container transition-all"
+                                    >
+                                      <option value="">-- choose a teacher --</option>
+                                      {teachers.map(t => (
+                                        <option key={t._id} value={t._id}>{t.firstName} {t.lastName} — {t.email}</option>
+                                      ))}
+                                    </select>
+                                  </div>
                                 </div>
-                              </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-on-primary opacity-60 uppercase tracking-widest mb-2 ml-1">Email Address</label>
+                                  <div className="relative">
+                                    <input 
+                                      placeholder="teacher@academy.edu"
+                                      className="w-full bg-white/10 border border-white/10 rounded-lg px-4 py-3 pl-11 text-sm text-on-primary outline-none focus:border-primary-container transition-all"
+                                      value={assignData.email}
+                                      onChange={e => setAssignData({...assignData, email: e.target.value})}
+                                    />
+                                    <Plus size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                                  </div>
+                                </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="block text-[10px] font-bold text-on-primary opacity-60 uppercase tracking-widest mb-2 ml-1">First Name</label>
