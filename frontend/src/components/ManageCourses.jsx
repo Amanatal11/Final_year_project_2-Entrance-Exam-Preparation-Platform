@@ -23,6 +23,7 @@ const ManageSubjects = () => {
   const [assignSuccess, setAssignSuccess] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
+  const [teacherSearch, setTeacherSearch] = useState('');
 
   useEffect(() => {
     fetchSubjects();
@@ -324,7 +325,10 @@ const ManageSubjects = () => {
                           // Load registered teachers for selection (lightweight list)
                           try {
                             const res = await api.get('/admin/users?role=teacher&limit=100');
-                            setTeachers(res.data?.data || []);
+                                setTeachers(res.data?.data || []);
+                                // reset any previous selection / search when opening
+                                setSelectedTeacherId('');
+                                setTeacherSearch('');
                           } catch (err) {
                             // Non-blocking; selection will be empty and email fallback remains
                             setTeachers([]);
@@ -354,15 +358,34 @@ const ManageSubjects = () => {
                                 <div>
                                   <label className="block text-[10px] font-bold text-on-primary opacity-60 uppercase tracking-widest mb-2 ml-1">Select Registered Teacher (optional)</label>
                                   <div className="relative">
+                                    {/* Search box to filter the teachers list */}
+                                    <div className="mb-2">
+                                      <div className="relative">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                                        <input
+                                          value={teacherSearch}
+                                          onChange={(e) => setTeacherSearch(e.target.value)}
+                                          placeholder="Search teachers by name or email"
+                                          className="w-full bg-white/10 border border-white/10 rounded-lg px-4 py-3 pl-11 text-sm text-on-primary outline-none focus:border-primary-container transition-all"
+                                        />
+                                      </div>
+                                    </div>
+
                                     <select
                                       value={selectedTeacherId}
                                       onChange={(e) => setSelectedTeacherId(e.target.value)}
                                       className="w-full bg-white/10 border border-white/10 rounded-lg px-4 py-3 text-sm text-on-primary outline-none focus:border-primary-container transition-all"
                                     >
                                       <option value="">-- choose a teacher --</option>
-                                      {teachers.map(t => (
-                                        <option key={t._id} value={t._id}>{t.firstName} {t.lastName} — {t.email}</option>
-                                      ))}
+                                      {teachers
+                                        .filter(t => {
+                                          const q = teacherSearch.trim().toLowerCase();
+                                          if (!q) return true;
+                                          return (`${t.firstName} ${t.lastName} ${t.email}`).toLowerCase().includes(q);
+                                        })
+                                        .map(t => (
+                                          <option key={t._id} value={t._id}>{t.firstName} {t.lastName} — {t.email}</option>
+                                        ))}
                                     </select>
                                   </div>
                                 </div>
